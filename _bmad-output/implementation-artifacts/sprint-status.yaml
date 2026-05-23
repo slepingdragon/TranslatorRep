@@ -1,0 +1,159 @@
+# generated: 2026-05-23
+# last_updated: 2026-05-23
+# project: TranslatorRep
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# PROJECT-SPECIFIC NOTES (2026-05-23):
+# ====================================
+# Solo-dev build by Bania (intermediate Android, novice iOS).
+# Epic 1 is in-progress. Three Epic-1 stories are externally blocked:
+#   - 1-2-ios-project-scaffold: sequenced on secondary Mac (Story 1.2 needs Xcode).
+#   - 1-3-oracle-vm-livekit-docker-compose-stack-domain: needs Oracle Cloud
+#     account + Cloudflare Registrar + ~$10/yr xaeryx.com domain + SSH keypair.
+#   - 1-4-firebase-init-firestore-rules-baseline-app-check-providers: needs
+#     Google account + Firebase project creation + DeviceCheck/Play Integrity
+#     provider registration.
+# These remain `backlog` until Bania completes the external setup. See
+# docs/runbooks/ios-setup-on-mac.md for the iOS handoff.
+
+generated: 2026-05-23
+last_updated: 2026-05-23
+project: TranslatorRep
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # Epic 1 — Foundation & Pairing
+  epic-1: in-progress
+  1-1-android-project-scaffold: done
+  1-2-ios-project-scaffold: backlog
+  1-3-oracle-vm-livekit-docker-compose-stack-domain: backlog
+  1-4-firebase-init-firestore-rules-baseline-app-check-providers: backlog
+  1-5-safelog-lint-ulid: ready-for-dev
+  1-6-cicd-per-stack: backlog
+  1-7-shared-specs-directory-cross-platform-fixtures: done
+  1-8-anonymous-sign-in-on-first-launch: backlog
+  1-9-display-own-pairing-code: backlog
+  1-10-enter-partners-pairing-code-to-pair: backlog
+  1-11-paired-state-persists-across-app-restarts: backlog
+  1-12-x25519-identity-keypair-generate-publish: backlog
+  1-13-settings-sheet-shell-with-unpair: backlog
+  1-14a-prd-reconciliation: done
+  1-14b-ux-spec-reconciliation: done
+  1-14c-solo-dev-scope-cuts-runbook: done
+  epic-1-retrospective: optional
+
+  # Epic 2 — Audio Calling
+  epic-2: backlog
+  2-1-auth-proxy-oracle-vm-app-check-verification-livekit-jwt-mint: backlog
+  2-2-paired-home-call-button-callsession-scaffolding: backlog
+  2-3-place-an-audio-call: backlog
+  2-4-ios-pushkit-callkit-incoming-call: backlog
+  2-5-android-fcm-connectionservice-incoming-call: backlog
+  2-6-accept-or-reject-incoming-call: backlog
+  2-7-in-call-screen-audio-40-60-layout: backlog
+  2-8-end-an-active-call: backlog
+  2-9-audio-routing-toggle-earpiece-speaker-bluetooth: backlog
+  2-10-audio-quality-acceptance-test: backlog
+  2-11-failure-state-taxonomy-seeds-network-drop-call-lifecycle: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3 — One-Direction Translation Pipeline
+  epic-3: backlog
+  3-1-pre-validation-conversation-with-girlfriend: backlog
+  3-2-particleprocessor-module-golden-file-fixtures: backlog
+  3-3-asrprovider-translationprovider-interfaces-symmetric-surface-cancellation-contract: backlog
+  3-4-android-on-device-asr-provider: backlog
+  3-5-ios-whisper-cpp-on-device-asr-provider: backlog
+  3-6-vad-audio-tap-from-webrtc-local-track: backlog
+  3-7-regression-corpus-bake-off-harness: backlog
+  3-8-nllb-200-distilled-600m-on-device-translation-provider-rank-1-candidate: backlog
+  3-9-week-1-validation-gate-lock-model-or-escalate: backlog
+  3-10-rulebasedtranslationprovider-decorator: backlog
+  3-11-three-layer-translation-capture-pipeline-debug-tracing: backlog
+  3-12-basic-captionstack-captionrow-speaker-side-rendering: backlog
+  3-13-partialcaption-android-speakingindicator-ios-honest-asymmetry: backlog
+  3-14-end-to-end-speaker-side-translation-caption-loop-beats-1-5: backlog
+  3-15-translation-failure-marker-speaker-side-basic: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4 — Bidirectional Captions & Failure States
+  epic-4: backlog
+  4-1-data-channel-schema-versioned-idempotent-ordered: backlog
+  4-2-publish-translation-to-peer-via-data-channel: backlog
+  4-3-receive-and-render-peers-caption-bidirectional-captionrow: backlog
+  4-4-translation-failure-marker-full-ux-with-long-press-explanation-and-retry: backlog
+  4-5-sundaneseplaceholderrow-quiet-sundanese-rendering-on-en-side: backlog
+  4-6-auto-scroll-with-manual-scroll-suspend: backlog
+  4-7-jumptolatestpill: backlog
+  4-8-state-priority-choreography-cross-platform-enforced: backlog
+  4-9-end-to-end-bidirectional-caption-loop-validation: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5 — End-to-End Encryption
+  epic-5: backlog
+  5-1-per-call-ephemeral-x25519-keypair-generate-sign-publish: backlog
+  5-2-ecdh-hkdf-key-derivation-on-peers-ephemeral-public-key: backlog
+  5-3-livekit-insertable-streams-wiring-with-keyprovider: backlog
+  5-4-e2eekeyexchangeindicator-one-time-visual-confirmation: backlog
+  5-5-privacy-verification-protocol-packet-capture-manual-e2e-pipeline-review: backlog
+  epic-5-retrospective: optional
+
+  # Epic 6 — Video Calling
+  epic-6: backlog
+  6-1-calltypeselector-two-button-audio-video-on-paired-home: backlog
+  6-2-camera-permission-lazy-flow: backlog
+  6-3-local-video-capture-self-view-pip: backlog
+  6-4-videotile-render-partners-video-stream: backlog
+  6-5-videopausedtile-network-drop-failure-ux: backlog
+  6-6-videomutedtile-partner-muted-their-camera-intentionally: backlog
+  6-7-videocallcontrolrow-5-controls-in-single-row: backlog
+  6-8-video-50-50-in-call-layout: backlog
+  epic-6-retrospective: optional
+
+  # Epic 7 — Leave-and-Rejoin Resilience
+  epic-7: backlog
+  7-1-livekit-empty-timeout-300-config-room-destroy-hook: backlog
+  7-2-leaveandrejoinmanager-client-side-state-machine: backlog
+  7-3-callwaitingforpartnerstate-overlay-on-remaining-side: backlog
+  7-4-rejoinnotification-local-notification-on-leaver-side: backlog
+  7-5-rejoin-flow-manual-transient-auto-rejoin: backlog
+  7-6-after-5-min-timeout-clean-room-destroy-both-sides-return-home: backlog
+  7-7-end-to-end-leave-and-rejoin-validation: backlog
+  epic-7-retrospective: optional
+
+  # Epic 8 — Personalization, Settings & Post-Call Surfaces
+  epic-8: backlog
+  8-1-theme-c-tokens-2-option-themepicker: backlog
+  8-2-backgroundimagepicker-sandbox-storage: backlog
+  8-3-backgroundimageoverlay-adaptive-dark-tint: backlog
+  8-4-theme-c-video-interaction: backlog
+  8-5-display-name-setting: backlog
+  8-6-transcript-history-opt-in-local-encrypted-storage: backlog
+  8-7-translation-post-editor-toggle-status-resolved: backlog
+  8-8-privacy-summary-screen-crashlytics-opt-in-toggle: backlog
+  8-9-qualityreviewrow-bania-side-post-call-quality-review-tool: backlog
+  8-10-hersideonetapreaction-aggregated-counts-to-bania: backlog
+  8-11-tq-at-v1-ship-gate-execution: backlog
+  epic-8-retrospective: optional

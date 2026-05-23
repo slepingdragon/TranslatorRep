@@ -302,7 +302,7 @@ Each user personalizes their app (theme: Dark or Custom image background; displa
 
 Both partners install the app, sign in anonymously, exchange a 6-digit pairing code, and reach the Paired home screen — the singular Paired Users relationship is formed. Lays scaffolding (Android Compose, iOS SwiftUI, Oracle VM Docker Compose, Firebase) and produces the PRD + UX-spec reconciliation deliverables that downstream epics reference.
 
-### Story 1.1: Android Project Scaffold — 🟡 FILES GENERATED 2026-05-22 (build verification pending Android Studio open)
+### Story 1.1: Android Project Scaffold — ✅ COMPLETED 2026-05-23 (verified building on Samsung Galaxy S24 Ultra)
 
 As a solo developer,
 I want a clean Android Studio project scaffolded with Compose, the project's locked dependencies, and the Theme A monochrome-glass token layer,
@@ -320,7 +320,7 @@ So that I have a baseline native Android app structure that all future stories b
 **And** `MonochromeGlassPanel.kt` exists in `ui/components/` rendering backdrop blur via `RenderEffect.createBlurEffect` at thick/regular/thin intensities (UX-DR5)
 **And** a hello-world screen launches on a physical Galaxy device showing the glass panel
 
-**Status (2026-05-22):** 🟡 All scaffold files written under `/android/` and ready for Android Studio import. Specifically:
+**Status (2026-05-23):** ✅ All scaffold files written under `/android/`. Verified building on Bania's Samsung Galaxy S24 Ultra (SM-S948U) via USB debugging — hello-world `MonochromeGlassPanel` renders crisp on device. Originally generated 2026-05-22; verification completed 2026-05-23. Specifically:
 - ✅ `build.gradle.kts` (top-level) + `settings.gradle.kts` + `gradle.properties` + `gradle/wrapper/gradle-wrapper.properties` (Gradle 8.10.2) + `gradle/libs.versions.toml` (version catalog with bump-rationale comments; AGP 8.7.3, Kotlin 2.1.0, Compose BOM 2024.12.01, LiveKit 2.25.3, Firebase BOM 33.7.0)
 - ✅ `app/build.gradle.kts` (Android application module with all required dependency bundles: compose, firebase, room, lifecycle, coroutines; namespace `com.xaeryx.translatorrep`; minSDK 33, target+compile SDK 35, Java 17 toolchain)
 - ✅ `app/src/main/AndroidManifest.xml` with all 9 permissions Story 1.1 requires (`RECORD_AUDIO`, `CAMERA`, `BLUETOOTH`+`BLUETOOTH_CONNECT`, `MANAGE_OWN_CALLS`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_PHONE_CALL`, `POST_NOTIFICATIONS`, `INTERNET`+`ACCESS_NETWORK_STATE`, `MODIFY_AUDIO_SETTINGS`, `WAKE_LOCK`) + hardware-feature declarations + placeholder for Story 2.5 ConnectionService/MessagingService (commented)
@@ -335,12 +335,17 @@ So that I have a baseline native Android app structure that all future stories b
 - ✅ `/android/README.md` documenting first-time setup steps + version-pinning notes + known-not-wired items (google-services.json, app icon, SafeLog, ULID library)
 - ✅ `/android/.gitignore`
 
-**Verification pending (NOT autonomously completable):**
-- ⏸ Bania opens `/android/` in Android Studio and first Gradle sync completes successfully.
-- ⏸ Hello-world Compose screen launches on Bania's physical Samsung Galaxy via USB debugging.
-- ⏸ Build verification — the version pins are best-knowledge at 2026-05-22 scaffolding; first-sync may surface AGP/Compose-BOM compatibility issues that require small bumps. Documented in `libs.versions.toml` comments.
+**Verification completed 2026-05-23:**
+- ✅ `/android/` opened in Android Studio; first Gradle sync completed successfully.
+- ✅ Hello-world Compose screen launched on Samsung Galaxy S24 Ultra (SM-S948U) via USB debugging.
+- ✅ Version pins (AGP 8.7.3 / Kotlin 2.1.0 / Compose BOM 2024.12.01 / LiveKit 2.25.3 / Firebase BOM 33.7.0) build cleanly — no compatibility bumps needed.
 
-**Known build-blocker on first sync:** `google-services` plugin will fail until `app/google-services.json` exists. Two workarounds documented in `/android/README.md`: (a) comment-out the two Firebase plugin aliases in `app/build.gradle.kts` for the first sync; or (b) drop in a placeholder `google-services.json`. Story 1.4 makes this permanent.
+**Decisions made during scaffold debugging (preserved in memory):**
+1. Added Foojay toolchain resolver to `settings.gradle.kts` for auto-JDK-17 download.
+2. Added JitPack repo to `settings.gradle.kts` for LiveKit's `com.github.davidliu:audioswitch` transitive dependency.
+3. **Commented out** `google-services` + `firebase-crashlytics` plugins in `app/build.gradle.kts` — they require `app/google-services.json` which doesn't exist yet. **Re-enable at Story 1.4.** Firebase BOM + per-SDK deps still resolve fine; they're just inert (no `FirebaseApp.initializeApp` call wired).
+4. XML theme parent switched to `Theme.AppCompat.DayNight.NoActionBar` (we have appcompat as dep; Compose's Material3 doesn't ship XML styles).
+5. **`MonochromeGlassPanel` blur dropped.** UX-DR5 calls for backdrop blur. Compose stdlib's `RenderEffect.createBlurEffect` via `Modifier.graphicsLayer` blurs the panel's CONTENT (text illegible) rather than the backdrop. No clean Compose-stdlib backdrop-blur path. Currently renders as flat translucent card. **Migration plan (in `MonochromeGlassPanel.kt` KDoc):** add `dev.chrisbanes.haze:haze` library in a Phase-5 polish story; the `GlassIntensity` enum + public API is stable so no caller changes when haze lands.
 
 ### Story 1.2: iOS Project Scaffold
 
