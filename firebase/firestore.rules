@@ -1,0 +1,78 @@
+// Firestore security rules — TranslatorRep v1.
+// Source-of-truth: Story 1.4 AC-2 + architecture.md §"Firestore Schema".
+// Owning story: 1-4-firebase-init-firestore-rules-baseline-app-check-providers.
+//
+// Deploy via: cd firebase && firebase deploy --only firestore:rules
+//
+// Design principles:
+//   - DENY by default (no top-level `allow read, write` rule).
+//   - Every write requires `request.auth != null` — anonymous auth still produces a uid.
+//   - No PII or conversation text ever lands here — only metadata (uids, pair ids,
+//     6-digit pairing codes, ephemeral public keys for E2EE).
+//   - Rules are testable via the Rules Playground in the Firebase console; also
+//     via `@firebase/rules-unit-testing` against the local emulator (not wired
+//     in this story; see Story 1-4d for that follow-up).
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── /users/{uid} ────────────────────────────────────────────────
+    // Per-user document. Holds anonymous-auth metadata + display name +
+    // device tokens. Only the owner can read or write.
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // ─── /pairs/{pairId} ─────────────────────────────────────────────
+    // Pair document. Two members (memberA, memberB) are anonymous uids.
+    // Only the two members can read or update the pair.
+    // Create: the caller must be one of the two members in the new doc.
+    match /pairs/{pairId} {
+      allow read, update, delete: if request.auth != null
+        && resource.data.memberA is string
+        && resource.data.memberB is string
+        && (resource.data.memberA == request.auth.uid
+            || resource.data.memberB == request.auth.uid);
+      allow create: if request.auth != null
+        && request.resource.data.memberA is string
+        && request.resource.data.memberB is string
+        && (request.resource.data.memberA == request.auth.uid
+            || request.resource.data.memberB == request.auth.uid);
+    }
+
+    // ─── /codes/{code} ───────────────────────────────────────────────
+    // Pairing code lookup. 6-digit ASCII code → ownerId mapping. Any
+    // authenticated user can READ (the lookup is the point of the
+    // collection), but only the owning user can write/update/delete
+    // their own code doc. Create: caller must set themselves as owner.
+    match /codes/{code} {
+      allow read: if request.auth != null;
+      allow update, delete: if request.auth != null
+        && resource.data.ownerId is string
+        && resource.data.ownerId == request.auth.uid;
+      allow create: if request.auth != null
+        && request.resource.data.ownerId is string
+        && request.resource.data.ownerId == request.auth.uid;
+    }
+
+    // ─── /calls/{callId}/ephemeralPub/{uid} ──────────────────────────
+    // Ephemeral X25519 public keys for E2EE key exchange. Each call has
+    // a subcollection of ephemeral pubs, one per participant uid.
+    //
+    // CONSERVATIVE RULE (this story): only the uid that owns the subdoc
+    // can read or write it. This means the peer can't read the ephemeral
+    // pub it needs — Epic 5 will expand this once /calls/{callId} is
+    // defined with a participants list. Until then, the architecture
+    // says ephemeral pubs are exchanged out-of-band via the Data Channel
+    // (Epic 5 ADR), so this restrictive rule is correct for v1 baseline.
+    //
+    // TODO(Epic 5): expand to allow read by any uid listed in
+    //   /calls/{callId}.participants. Requires /calls/{callId} schema
+    //   to be defined first (Epic 2 Story 2.1 auth-proxy + call doc).
+    match /calls/{callId}/ephemeralPub/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

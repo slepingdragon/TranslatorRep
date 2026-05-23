@@ -258,18 +258,23 @@ GitHub Actions free tier = 2000 minutes/month. Solo-dev PR volume <30/month × ~
 
 ---
 
-## 10. Externally-blocked work (DO NOT START)
+## 10. Externally-blocked work (DO NOT START without checking)
 
-| Story | Blocker | Status |
+| Story | Blocker | Status / sub-letter scheme |
 |---|---|---|
 | `1-2-ios-project-scaffold` | Requires Mac + Xcode | Deferred to Mac session per `docs/runbooks/ios-setup-on-mac.md` |
 | `1-3-oracle-vm-livekit-...` | Requires Oracle Cloud account + Cloudflare Registrar + `xaeryx.com` domain (~$10/yr) + SSH keypair | Bania completes manually |
-| `1-4-firebase-init-...` | Requires Google account + Firebase project creation + DeviceCheck/Play Integrity provider registration | Bania completes manually |
-| `1-8` through `1-13` | All gated on Story 1.4 (Firebase) | Cascading block |
+| `1-4-firebase-init-...` (Android) | Phase 0 (manual Firebase console setup) per `docs/runbooks/firebase-setup-android.md` | **Prep PR landed 2026-05-23** (story file + runbook + `firebase/` rules + Kotlin stub). `ready-for-dev`. Activation PR waits on Bania's Phase 0. |
+| `1-4b-ios-firebase-init` | Story 1.2 + 1.4 | Future iOS Claude session |
+| `1-4c-firebase-app-distribution-android` | Story 1.4 | Gives the QR/install workflow for testing builds on phone |
+| `1-8` through `1-13` (pairing arc) | All gated on Story 1.4 (Firebase) | Cascading block — unblocks as soon as 1.4 lands |
+| `1-6b-ios-ci-flesh-out` | Story 1.2 | iOS CI flesh-out |
+| `1-6c-infra-ci-flesh-out` | Story 1.3 | infra CI flesh-out |
+| `1-6d-android-ci-flesh-out` | Available now; not picked up yet | Compose UI tests + Roborazzi + assembleRelease + signing-config |
 
-**If an agent is asked to start one of these, refuse and surface the blocker.** Don't fabricate partial Firebase init or scaffold an iOS Xcode project in `ios/` — that's wasted work that will conflict with the real story.
+**If an agent is asked to start one of these, check current state in `sprint-status.yaml` first** — many have prep PRs already landed that just need activation, not from-scratch start.
 
-Mac-side work waits until Windows-side Epic 1 is fully done (Bania's explicit decision 2026-05-23 — "Mac at end, Android first").
+**Mac-side work waits until Windows-side Epic 1 is fully done** (Bania's explicit decision 2026-05-23 — "Android all first, then a separate Claude session for iOS"). This means iOS sub-letters (1-2, 1-4b, 1-6b, etc.) accumulate as backlog while Android-side Stories 1.4 → 1.8 → 1.9 → ... → 1.13 progress.
 
 ---
 
