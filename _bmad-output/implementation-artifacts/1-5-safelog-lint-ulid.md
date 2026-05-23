@@ -1,6 +1,6 @@
 # Story 1.5: SafeLog Facade + Lint Enforcement + ULID Library Wiring
 
-Status: review
+Status: done
 
 <!-- Created 2026-05-23 by bmad-create-story. Validation optional; run bmad-create-story:validate before bmad-dev-story if desired. -->
 
