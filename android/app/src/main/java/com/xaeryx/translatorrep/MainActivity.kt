@@ -1,6 +1,7 @@
 package com.xaeryx.translatorrep
 
 import android.os.Bundle
+import android.util.Log // SMOKE TEST — Story 1.6 AC-5: detekt SafeLog ForbiddenImport must fire on this line. REVERT before merging.
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
