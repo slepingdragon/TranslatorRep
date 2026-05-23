@@ -63,6 +63,23 @@ enum class AllowedLogKey {
 
     /** Call duration in milliseconds; wire form `call_duration_ms`. */
     CALL_DURATION_MS,
+
+    // ── Story 1.4 (Firebase Init + Firestore + App Check) — added 2026-05-23 ─
+
+    /** Firebase init outcome ("success" | "failed:<ExceptionClass>"); wire form `firebase_init`. */
+    FIREBASE_INIT,
+
+    /** App Check provider init outcome ("debug" | "playintegrity" | "failed:<reason>"); wire form `app_check_init`. */
+    APP_CHECK_INIT,
+
+    /** Auth UID — first 4 chars ONLY (never full UID per privacy convention); wire form `auth_uid`. */
+    AUTH_UID,
+
+    /** Story 1.4 smoke test — self-write to /users/{uid} outcome; wire form `smoke_users_write`. */
+    SMOKE_USERS_WRITE,
+
+    /** Story 1.4 smoke test — forbidden-write to /users/<other-uid> outcome (expected "denied"); wire form `smoke_forbidden_write`. */
+    SMOKE_FORBIDDEN_WRITE,
 }
 
 /**

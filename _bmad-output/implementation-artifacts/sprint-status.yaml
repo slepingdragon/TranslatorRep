@@ -37,7 +37,7 @@
 # docs/runbooks/ios-setup-on-mac.md for the iOS handoff.
 
 generated: 2026-05-23
-last_updated: 2026-05-23T18:55  # Story 1.6 → done — CR-patches CI green (3m58s full chain), all 9 ACs satisfied + workflow hardened
+last_updated: 2026-05-23T19:40  # Story 1.4 prep — story file + runbook + firebase/ + FirebaseBootstrap stub (variant source sets). Phase 0 gated on Bania manual setup.
 project: TranslatorRep
 project_key: NOKEY
 tracking_system: file-system
@@ -49,7 +49,9 @@ development_status:
   1-1-android-project-scaffold: done
   1-2-ios-project-scaffold: backlog
   1-3-oracle-vm-livekit-docker-compose-stack-domain: backlog
-  1-4-firebase-init-firestore-rules-baseline-app-check-providers: backlog
+  1-4-firebase-init-firestore-rules-baseline-app-check-providers: ready-for-dev  # Android-only scope; Phase 0 (manual Firebase setup) gated on Bania
+  1-4b-ios-firebase-init: backlog       # Sequenced after Story 1.2 (Xcode project on Mac) — future iOS Claude session
+  1-4c-firebase-app-distribution-android: backlog  # QR-code/install workflow; sequenced after Story 1.4 lands
   1-5-safelog-lint-ulid: done
   1-6-cicd-per-stack: done              # Android CI live + CR patches landed; iOS + infra + Compose UI/Roborazzi/release deferred to 1-6b/1-6c/1-6d
   1-6b-ios-ci-flesh-out: backlog        # Sequenced after Story 1.2 (Xcode project on Mac)
