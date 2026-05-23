@@ -1,0 +1,33 @@
+# TranslatorRep project root .gitignore
+# Per-stack .gitignore files live in /android/, /ios/, /infra/, etc.
+
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini
+*~
+
+# Editors / IDEs (anything not in a stack-specific .gitignore)
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local-only environment
+.env
+.env.local
+*.local
+
+# Secrets — never commit these. Stack-specific .gitignore files duplicate
+# the relevant entries so a `git add` from the stack directory is also safe.
+**/google-services.json
+**/GoogleService-Info.plist
+**/firebase-adminsdk-*.json
+**/serviceAccountKey.json
+
+# Build/log artifacts that shouldn't appear at project root
+*.log
+*.tmp
+
+# Claude Code session noise
+.claude/cache/

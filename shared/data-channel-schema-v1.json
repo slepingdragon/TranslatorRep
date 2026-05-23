@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xaeryx.com/translatorrep/shared/data-channel-schema-v1.json",
+  "title": "TranslatorRep Data Channel Message (v1)",
+  "description": "Wire payload for finalized translated Utterances sent over the WebRTC Data Channel between Paired Users. Authority: architecture.md §5 Data Channel Schema. Field naming convention: snake_case (locked). Authorship: Story 1.7 (2026-05-22).",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "seq",
+    "utterance_id",
+    "speaker_uid",
+    "source_lang",
+    "source_text",
+    "target_lang",
+    "target_text",
+    "translation_status",
+    "render_mode",
+    "call_type"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema major version. Receiver MUST silently drop messages with unknown major versions (forward-incompat releases). Adding/removing/renaming a required field bumps this. Adding optional fields does NOT bump it."
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Monotonic per-sender counter starting at 1 at Call start. Receiver dedup key: (speaker_uid, seq). Receiver renders in seq order (re-orders with ~500ms reorder buffer)."
+    },
+    "utterance_id": {
+      "type": "string",
+      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "ULID identifying the Utterance. 26-character Crockford base32. Time-sortable. Used as CaptionRow stable identity across partial→final transitions."
+    },
+    "speaker_uid": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Firebase Auth anonymous UID of the speaker (the sender of this message)."
+    },
+    "source_lang": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(-[A-Z]{2})?$",
+      "description": "BCP 47 language tag of the source text (e.g., 'id-ID', 'en-US'). NEVER use Flores-200 codes here (those are internal to TranslationProvider model calls only)."
+    },
+    "source_text": {
+      "type": "string",
+      "description": "The speaker's transcribed Source Text from on-device ASR. UTF-8. Bounded by Utterance length (max 15s of speech per FR-12 → typical max ~200 chars)."
+    },
+    "target_lang": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(-[A-Z]{2})?$",
+      "description": "BCP 47 language tag of the target text (e.g., 'en-US', 'id-ID')."
+    },
+    "target_text": {
+      "type": "string",
+      "description": "The translated text. UTF-8. Bounded similarly to source_text. Under render_mode='sundanesePlaceholder', this MAY be a literal '[Sundanese]' placeholder string."
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Aggregate confidence score (0.0-1.0). Combines ASR confidence and translation confidence; per-implementation weighting. Optional but recommended; consumers may default to 1.0 when absent."
+    },
+    "timestamp_offset_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Sender's offset (ms) from local call_start_ms (the moment that sender joined the room). NOT wall-clock UTC. Receiver computes display 'X seconds ago' from its own clock; never trusts sender's wall-clock. Ordering uses seq, not timestamps."
+    },
+    "translation_status": {
+      "type": "string",
+      "enum": ["ok", "failed", "low-confidence"],
+      "description": "Status enum. Orthogonal to render_mode. 'failed' triggers TranslationUnavailableMarker. 'low-confidence' surfaces inline tertiary marker on the Caption row."
+    },
+    "render_mode": {
+      "type": "string",
+      "enum": ["default", "sundanesePlaceholder"],
+      "description": "Rendering hint enum. Orthogonal to translation_status. 'sundanesePlaceholder' triggers SundanesePlaceholderRow on the EN side regardless of translation_status (ParticleProcessor flagged a full Sundanese clause)."
+    },
+    "particles_preserved": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of TQ-1 / TQ-2 / TQ-4 / etc. preserved-particle tokens (e.g., ['kan', 'loh', 'urang']). When non-empty, target_text renders with +0.3pt letter-spacing emotional-weight whisper per UX-DR7. Empty list (or absent) = normal rendering."
+    },
+    "call_type": {
+      "type": "string",
+      "enum": ["audio", "video"],
+      "description": "CallType the Utterance was captured in. Useful for post-Call analytics and for future-version variants that may render differently in video vs audio. Default 'audio' for legacy messages where field absent."
+    }
+  }
+}

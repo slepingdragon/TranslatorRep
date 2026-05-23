@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        UX-DR34 forbidden-strings audit: every user-facing string in this
+        file is reviewed against the 8 forbidden-strings categories
+        (self-monitoring anxiety, othering, performance anxiety,
+        instrumentalization, translation theater, app-pride, apologetic-
+        corporate, pity, AI-app feeling). Code-review gate.
+    -->
+    <string name="app_name">TranslatorRep</string>
+
+    <!-- Story 1.1 hello-world strings (replaced in Story 1.8 with the
+         actual Paired-Empty home content). -->
+    <string name="scaffold_ready">Scaffold ready — Story 1.1 done.</string>
+</resources>

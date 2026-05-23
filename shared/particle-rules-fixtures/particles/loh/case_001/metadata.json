@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["loh"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "emotional-weight", "intimacy-register", "starter-fixture"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles",
+  "notes": "Sentence-final 'loh' adds gentle insistence + emotional weight (DR §7 prosody finding); English equivalent 'you know' preserves the intimate-relational register. ParticleProcessor preProcess strategy: tag the particle position with [PARTICLE:loh] so the NMT does not strip it; postProcess strategy: ensure 'you know' (or equivalent) is present in the target text and add 'loh' to particlesPreserved so UX-DR7 renders the target with +0.3pt letter-spacing. This is the starter fixture used to validate the cross-platform harness end-to-end (Story 1.7 setup; expanded in Story 3.2)."
+}

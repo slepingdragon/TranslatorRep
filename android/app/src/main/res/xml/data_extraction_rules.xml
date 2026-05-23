@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Android 12+ data-extraction rules. NFR-Privacy posture (post-reconciliation
+    PRD §6.1): conversation content never leaves the device; transcript history
+    is local-only, never synced.
+
+    By denying both cloud backup AND device-transfer of any FR-21 transcript
+    or quality-review record, we ensure these never accidentally land in
+    Google Drive auto-backup or a device-to-device migration package.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- Allow nothing into cloud backup. We don't store anything users
+             would want to recover from a backup — auth state is anonymous,
+             pairing is per-device, transcripts are intentionally local-only. -->
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </cloud-backup>
+
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>

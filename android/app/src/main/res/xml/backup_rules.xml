@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Legacy auto-backup rules (Android 11 and below — minSDK is 33 so this
+    file is included only for compatibility with the manifest reference;
+    it should never actually be consulted at runtime).
+
+    Posture matches data_extraction_rules.xml: deny everything.
+-->
+<full-backup-content>
+    <exclude domain="root" />
+    <exclude domain="file" />
+    <exclude domain="database" />
+    <exclude domain="sharedpref" />
+    <exclude domain="external" />
+</full-backup-content>

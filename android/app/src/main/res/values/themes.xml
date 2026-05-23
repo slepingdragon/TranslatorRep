@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+        XML theme parent for activities. The actual visual theme tokens
+        live in Compose (`Theme.kt` + `Color.kt`). This XML theme only
+        controls system-chrome-level behavior (splash, status bar, etc.)
+        that happens before Compose renders.
+    -->
+    <!--
+        Parent: Theme.AppCompat.DayNight.NoActionBar — ships in androidx.appcompat
+        (already a dependency). Compose's `androidx.compose.material3:material3`
+        does NOT ship XML styles, only Compose APIs; switching to a Material 3
+        XML parent would require adding `com.google.android.material:material`
+        (a different library), which is overkill for a Compose-only app that
+        only uses this XML theme for first-frame system-chrome setup.
+    -->
+    <style name="Theme.TranslatorRep" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <!-- Force dark mode app-wide so the very-first-frame matches Compose theme. -->
+        <item name="android:forceDarkAllowed" tools:targetApi="29">false</item>
+    </style>
+
+</resources>
