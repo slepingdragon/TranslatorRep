@@ -11,40 +11,60 @@
 // verified by UlidParityTests against the locked test vector — both platforms must
 // produce byte-identical output from the same (timestamp, random) input.
 //
-// Runtime library: swift-ulid (oherrala/swift-ulid via SPM — see ios/PACKAGES.md).
-// Callers must never reach past this facade; if the library is swapped, only this
-// file changes.
+// Runtime library: yaslab/ULID.swift via SPM (module name `ULID`) — see
+// ios/PACKAGES.md. The import is gated by `#if canImport(ULID)` so this file
+// compiles even before Story 1.2 wires the SPM dependency (in that pre-wire
+// state, `next()` traps at runtime but `encodeCanonical(...)` works — the
+// parity test exercises only the latter).
+//
+// Callers must never reach past this facade; if the library is swapped, only
+// this file changes.
 
 import Foundation
-import ULID  // swift-ulid: pinned in Story 1.2 via SPM
+#if canImport(ULID)
+import ULID
+#endif
 
 enum UlidGenerator {
 
     /// Generate a fresh canonical 26-char Crockford base32 ULID using the current time.
+    ///
+    /// Pre-SPM-wire-up (before Story 1.2 close-out), this traps with a clear message —
+    /// `encodeCanonical(...)` is the library-independent path used by the parity test.
     static func next() -> String {
+        #if canImport(ULID)
         return ULID().ulidString
+        #else
+        preconditionFailure(
+            "UlidGenerator.next() requires the ULID SPM dependency — wire it in Story 1.2 per ios/PACKAGES.md."
+        )
+        #endif
     }
 
     /// Spec-correct ULID encoding from explicit (48-bit timestamp, 80-bit random).
-    /// Library-independent — pure Crockford base32 math.
+    /// Library-independent — pure Crockford base32 math. Mirrors Android's
+    /// `UlidGenerator.encodeCanonical(...)` exactly (non-throwing; traps on
+    /// contract violation via `precondition` to match Kotlin's `require {}`).
     ///
     /// The Crockford base32 alphabet is `0123456789ABCDEFGHJKMNPQRSTVWXYZ`
     /// (excludes I, L, O, U to avoid visual ambiguity).
     ///
     /// - Parameters:
-    ///   - timestampMs: Unix epoch milliseconds; must fit in 48 bits (≤ 2^48 − 1,
-    ///     practically unbounded). Higher bits are masked off.
-    ///   - random80BitBigEndian: Exactly 10 bytes (80 bits) of random material in
-    ///     big-endian byte order.
+    ///   - timestampMs: Unix epoch milliseconds. Must be in `[0, 2^48 − 1]` —
+    ///     values outside this range trap.
+    ///   - random80BitBigEndian: Exactly 10 bytes (80 bits) of random material
+    ///     in big-endian byte order.
     /// - Returns: The canonical 26-character ULID string.
-    /// - Throws: `UlidGeneratorError.invalidRandomLength` if the random array is not 10 bytes.
-    static func encodeCanonical(timestampMs: Int64, random80BitBigEndian: [UInt8]) throws -> String {
-        guard random80BitBigEndian.count == 10 else {
-            throw UlidGeneratorError.invalidRandomLength(got: random80BitBigEndian.count)
-        }
-        guard timestampMs >= 0 else {
-            throw UlidGeneratorError.negativeTimestamp(got: timestampMs)
-        }
+    static func encodeCanonical(timestampMs: Int64, random80BitBigEndian: [UInt8]) -> String {
+        precondition(
+            random80BitBigEndian.count == 10,
+            "ULID random portion must be exactly 10 bytes (80 bits); got \(random80BitBigEndian.count)"
+        )
+        precondition(timestampMs >= 0, "timestampMs must be non-negative; got \(timestampMs)")
+        precondition(
+            timestampMs <= maxTimestampMs,
+            "timestampMs must fit in 48 bits (≤ \(maxTimestampMs)); got \(timestampMs)"
+        )
 
         // Lay out 128 bits as a 16-byte buffer: 6-byte big-endian timestamp || 10-byte random.
         var buf = [UInt8](repeating: 0, count: 16)
@@ -70,6 +90,7 @@ enum UlidGenerator {
     }
 
     private static let ulidLength = 26
+    private static let maxTimestampMs: Int64 = (1 << 48) - 1
 
     /// Extract 5 bits from `buf` starting at `bitOffsetFromLeft` (counting from the
     /// MSB of `buf[0]`). A negative offset is allowed and corresponds to the prepended
@@ -89,19 +110,5 @@ enum UlidGenerator {
             value = (value << 1) | bit
         }
         return value
-    }
-}
-
-enum UlidGeneratorError: Error, CustomStringConvertible {
-    case invalidRandomLength(got: Int)
-    case negativeTimestamp(got: Int64)
-
-    var description: String {
-        switch self {
-        case .invalidRandomLength(let got):
-            return "ULID random portion must be exactly 10 bytes (80 bits); got \(got)"
-        case .negativeTimestamp(let got):
-            return "timestampMs must be non-negative; got \(got)"
-        }
     }
 }

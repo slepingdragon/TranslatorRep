@@ -58,7 +58,7 @@
 - ULIDs are time-sortable and collision-resistant at 2-user scale.
 - **Library pinning (Gap I.12 — locked at Story 1.5, 2026-05-23):**
   - **Android:** `com.aallam.ulid:ulid-kotlin:1.3.0` (Kotlin Multiplatform; JVM variant selected automatically via Gradle Module Metadata). Wrapped behind `android/app/src/main/java/com/xaeryx/translatorrep/ids/UlidGenerator.kt`. Production calls go through `UlidGenerator.next()`.
-  - **iOS:** `https://github.com/oherrala/swift-ulid` (Apache 2.0; pinned to a tagged release via SPM — concrete tag chosen at Story 1.2 close-out per `ios/PACKAGES.md`). Wrapped behind `ios/TranslatorRep/IDs/UlidGenerator.swift`.
+  - **iOS:** `https://github.com/yaslab/ULID.swift` (MIT; SPM module name `ULID`; pinned to a tagged release ≥ `1.3.1` per `ios/PACKAGES.md` — concrete tag chosen at Story 1.2 close-out). Wrapped behind `ios/TranslatorRep/IDs/UlidGenerator.swift`.
   - Both `UlidGenerator` types expose a library-independent `encodeCanonical(timestampMs, random80BitBigEndian)` helper that implements Crockford base32 encoding directly (no library dependency). This is what the parity test exercises — the production `next()` paths delegate to their respective libraries, which are assumed spec-compliant.
 - **Test vector** (locked at Story 1.5; cross-platform parity verification):
   - Input timestamp: `2026-05-22T13:53:51.242Z` (`1779458031242` ms since Unix epoch)

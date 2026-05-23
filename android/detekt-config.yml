@@ -95,7 +95,15 @@ naming:
       - 'Composable'
       - 'Preview'
   MatchingDeclarationName:
-    active: false   # too restrictive when a Compose file pairs a fun with an enum
+    # Disabled globally because Compose files commonly pair a top-level
+    # @Composable fun (PascalCase) with a supporting enum in the same file
+    # (e.g., MonochromeGlassPanel.kt pairs `fun MonochromeGlassPanel` with
+    # `enum class GlassIntensity`). The rule has no per-annotation ignore
+    # equivalent to FunctionNaming.ignoreAnnotated, so we accept the
+    # tradeoff: file-naming compliance is enforced by code review (§16)
+    # instead. Re-enable + add file-level @Suppress("MatchingDeclarationName")
+    # at each Compose file if the manual-review cost becomes burdensome.
+    active: false
   FunctionParameterNaming:
     active: true
   ObjectPropertyNaming:

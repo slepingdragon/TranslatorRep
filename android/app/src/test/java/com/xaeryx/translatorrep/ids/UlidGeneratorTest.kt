@@ -46,14 +46,21 @@ class UlidGeneratorTest {
     @Test
     fun `ULIDs generated in different milliseconds are time-sortable`() {
         // Across millisecond boundaries the timestamp portion (first 10 chars) is
-        // strictly monotonic, so lexicographic sort = chronological sort.
+        // monotonic. We assert ONLY the timestamp prefix, not the full string —
+        // the 16-char random tail is independent per call and may sort either way
+        // when same-ms (which would flake the test on Windows where the timer-tick
+        // is coarser than the sleep). 50 ms is well above the Windows ~15.6 ms
+        // default tick granularity.
         val first = UlidGenerator.next()
-        Thread.sleep(SLEEP_MS_FOR_MONOTONICITY) // guarantee distinct ms
+        Thread.sleep(SLEEP_MS_FOR_MONOTONICITY)
         val second = UlidGenerator.next()
         assertNotEquals(first, second)
+        val firstTimestampPrefix = first.substring(0, TIMESTAMP_PREFIX_LEN)
+        val secondTimestampPrefix = second.substring(0, TIMESTAMP_PREFIX_LEN)
         assertTrue(
-            "Expected time-sortable ULIDs: '$first' should sort before '$second'",
-            first < second,
+            "Expected time-sortable ULIDs: timestamp prefix '$firstTimestampPrefix' " +
+                "(of '$first') should sort <= '$secondTimestampPrefix' (of '$second')",
+            firstTimestampPrefix < secondTimestampPrefix,
         )
     }
 
@@ -83,6 +90,7 @@ class UlidGeneratorTest {
     private companion object {
         const val N_SAMPLES = 1000
         const val ULID_LEN = 26
-        const val SLEEP_MS_FOR_MONOTONICITY = 2L
+        const val TIMESTAMP_PREFIX_LEN = 10
+        const val SLEEP_MS_FOR_MONOTONICITY = 50L
     }
 }

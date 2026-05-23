@@ -11,7 +11,7 @@ must be actionable in <5 minutes.
 
 | Package | URL | Version Rule | Purpose | Wired in |
 |---|---|---|---|---|
-| swift-ulid | `https://github.com/oherrala/swift-ulid` | Up to next minor — pinned to a tagged release, NOT `main` | 26-char Crockford base32 ULID generation | `IDs/UlidGenerator.swift` (Story 1.5) |
+| ULID.swift | `https://github.com/yaslab/ULID.swift` | Up to next minor from a tagged release (e.g. `1.3.1`), NOT `main` | 26-char Crockford base32 ULID generation; SPM module name is `ULID` | `IDs/UlidGenerator.swift` (Story 1.5) |
 | FirebaseAuth | `https://github.com/firebase/firebase-ios-sdk` | Pin per Firebase BOM equivalent | Anonymous Auth | Story 1.8 |
 | FirebaseFirestore | same as above | same | Pairing + per-call metadata | Story 1.9+ |
 | FirebaseAppCheck | same as above | same | DeviceCheck provider gating backend | Story 1.4 |
@@ -19,14 +19,19 @@ must be actionable in <5 minutes.
 | LiveKit (Swift) | `https://github.com/livekit/client-sdk-swift` | Tag matching Android's `2.25.3` Insertable Streams support | WebRTC + Data Channel + E2EE | Epic 2+ |
 | Whisper.cpp XCFramework | (custom build steps — see architecture §B) | n/a | On-device ASR (FR-13 / Epic 3.5) | Story 3.5 |
 
-When wiring the swift-ulid dep in Xcode:
+When wiring the ULID.swift dep in Xcode:
 
 ```
 File → Add Package Dependencies → paste URL → "Up to Next Minor" from tagged release → Add
 ```
 
-Then in the target's build settings, ensure the `swift-ulid` library is in
+Then in the target's build settings, ensure the `ULID` library product is in
 "Frameworks, Libraries, and Embedded Content" with "Do Not Embed."
+
+`UlidGenerator.swift` imports the module conditionally (`#if canImport(ULID)`), so
+the file compiles even before the SPM dependency is wired — but `next()` will
+crash with a runtime trap until SPM is added. `encodeCanonical(...)` is
+library-independent and works regardless.
 
 ---
 

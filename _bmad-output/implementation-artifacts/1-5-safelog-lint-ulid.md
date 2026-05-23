@@ -116,9 +116,9 @@ so that conversation content can never accidentally leak to logs and all canonic
 Single source of truth — both Android and iOS ULID generators must produce **byte-identical canonical Crockford base32 output** from this input.
 
 ```
-unix_millis_ms: 1779717231242        (= 2026-05-22T13:53:51.242Z)
-random_bytes_hex: 0102030405060708090A0B0C0D0E0F10
-expected_ulid:  01JVTRYP1A0G20G62R2GR8Y3RG
+unix_millis_ms: 1779458031242        (= 2026-05-22T13:53:51.242Z)
+random_bytes_hex: 0102030405060708090A           (10 bytes / 80 bits — ULID spec)
+expected_ulid:  01KS7ZDFMA041061050R3GG28A
 ```
 
 > **Computation note:** This expected output is **derived from the canonical ULID algorithm** (Crockford base32 of `[timestamp_48bit_be][random_80bit_be]`). The dev agent MUST recompute this at implementation time from the chosen library's API and update this line if the agent's computation differs from the value shown above. Whichever value both platforms agree on becomes the locked test vector — record it in `/shared/canonical-names.md` per Task 14.2.
@@ -482,3 +482,49 @@ First clean detekt run hit 5 pre-existing Story-1.1 naming violations:
 ### Change Log
 
 - 2026-05-23 — Story 1.5 implementation complete; status moved `ready-for-dev` → `review`. All 16 tasks completed, 7 unit tests passing, detekt clean (0 code smells), SafeLog ForbiddenImport rule verified via synthetic-violation smoke test.
+- 2026-05-23 — Code-review (xhigh) iteration. 15 findings reviewed; fixes applied below. `./gradlew :app:detekt :app:testDebugUnitTest` still passes (0 code smells, all 7 tests green) on Android Studio JBR 21 + Gradle 8.10.2. Status remains `review` pending sign-off → ready to flip to `done`.
+
+### Code-Review Fixes (2026-05-23)
+
+xhigh-effort review surfaced 15 findings. Fixes by severity:
+
+**Critical — rule was inoperative / spec-locked URL was dead:**
+
+1. **SwiftLint `match_kinds` removed from `forbid_direct_ios_logging`** (`ios/.swiftlint.yml`). `match_kinds: [identifier, typeidentifier]` filtered every match because the regex includes a trailing `(` (punctuation kind), so the rule silently never fired — AC-4 was passing for the wrong reason. Removed the filter and added an inline NOTE explaining why future contributors must not re-add it. Also broadened the regex to catch `NSLog(`, `debugPrint(`, `dump(`, plus method-style logging calls (`.log(`, `.debug(`, `.info(`, etc.) so a stashed-then-called Logger instance can't bypass the gate.
+2. **iOS ULID library switched** from the non-existent `github.com/oherrala/swift-ulid` (404 — verified via GitHub) to `github.com/yaslab/ULID.swift` (MIT, 132★, SPM module name `ULID`). Updated in `ios/PACKAGES.md` and `shared/canonical-names.md`. Production `next()` API still matches (`ULID().ulidString`).
+3. **Story file test-vector block updated** — the "Single source of truth" block at lines 119–121 was still showing the OLD vector (1779717231242 / 16-byte hex / 01JVTRYP...). Replaced with the locked vector (1779458031242 / 10-byte 0102030405060708090A / 01KS7ZDFMA041061050R3GG28A).
+
+**High — file may not compile / scope-creep / unknown YAML keys:**
+
+4. **iOS `import ULID` gated with `#if canImport(ULID)`** in `UlidGenerator.swift`. Pre-SPM-wire-up the file still compiles; `next()` traps with a clear message pointing at PACKAGES.md, while `encodeCanonical(...)` (library-independent) keeps working — so the parity test path is decoupled from the library wire-up state.
+5. **SwiftLint `included_path_regexes:` removed** (`ios/.swiftlint.yml`). Not a valid SwiftLint config key (verified against SwiftLint source). The leftover stanza would have produced configuration warnings and broken any future `--strict` invocation. Replaced with an explicit `identifier_name.min_length` override (warning/error both 1) so short loop counters like `i`, `bit` in the ULID encoders aren't false-positives.
+
+**Med — production-vs-debug routing, API parity, monotonicity, privacy:**
+
+6. **Android SafeLog gates Crashlytics behind `!BuildConfig.DEBUG`** (`SafeLog.kt`). Story task 4.1 specified Crashlytics-route-production-only. Implementation was running BOTH routes regardless; debug-session custom keys would have polluted the production Crashlytics dashboard post-Story-1.4. Now an `if (DEBUG) Log.d else runCatching { Crashlytics.setCustomKey }` mutually-exclusive branch.
+7. **iOS `encodeCanonical` API parity** — changed from `throws` to non-throwing using `precondition(...)` so the signature mirrors Kotlin's `require {}`. Removed the `UlidGeneratorError` enum (no longer needed). Added the upper-bound `timestampMs <= (1 << 48) − 1` check on both platforms; previously oversized timestamps were silently truncated.
+8. **Android `UlidGenerator.kt`** — added KDoc on `next()` explicitly documenting the two known monotonicity limitations (no within-ms ordering from `randomULID(ts)`, and `System.currentTimeMillis()` not being a monotonic clock). These are acceptable at the 2-user-per-pair scale per architecture §4, but the limits are now visible to future scaling work.
+9. **iOS SafeLog `%@` instead of `%{public}@`** in os_log. `%{public}@` explicitly opts OUT of iOS unified-log privacy redaction; the default `%@` lets the OS redact dynamic format-string arguments to `<private>` in sysdiagnose/MDM diagnostics — a free defense-in-depth layer for SafeLog that the previous code stripped away.
+10. **iOS SafeLog OSLog subsystem** now resolves at runtime from `Bundle.main.bundleIdentifier` (falling back to `com.xaeryx.translatorrep`) instead of hardcoding the bundle ID — Story 1.2 will set the real bundle ID in Xcode and the log filter will Just Work without a code edit.
+11. **Updated `SafeLog.swift` comment** to accurately describe iOS Crashlytics pre-init behavior. Crashlytics.crashlytics() on iOS does NOT raise NSException pre-`FirebaseApp.configure()` (verified via Firebase iOS SDK source); it logs an error and dispatches downstream `setCustomValue` to a nil-backed singleton, which is safe in Obj-C msgSend semantics. The original comment hedged; the new comment is accurate and explains why no do/catch wrap is needed (and would not even compile — `setCustomValue` is non-throwing).
+12. **`UlidGeneratorTest.kt` monotonicity test** — bumped sleep from 2 ms → 50 ms (well above Windows ~15.6 ms default timer tick) AND switched the assertion from full-string `first < second` to timestamp-prefix-only comparison (first 10 chars). Eliminates the ~50% flake risk on Windows CI where the 80-bit random tail could lex-sort either way when both ULIDs land in the same ms.
+
+**Low — documentation and forward-proofing:**
+
+13. **`detekt-config.yml` `MatchingDeclarationName` disable rationale** — expanded the comment to explain the actual Compose pattern that triggered the global disable (MonochromeGlassPanel.kt pairing a @Composable function with a supporting enum), so future contributors understand WHY the rule is off and can re-enable + file-level @Suppress if the manual-review cost grows.
+14. **`android/build.gradle.kts`** — added a comment explaining detekt is currently applied explicitly inside `:app` only (single-module project) and documenting the wire-up pattern any future module must follow to keep the SafeLog ForbiddenImport gate intact. Story task 7.1's `subprojects { }` propagation block was not added because adding it today (single-module project) creates plugin-application redundancy with `:app/build.gradle.kts`; the comment captures the intent without the risk of breaking the working build.
+15. **iOS SwiftLint `disabled_rules`** — kept the original Task 12.2 + dev-justified disables (8 rules total), but pruned `identifier_name`, `vertical_whitespace`, `opening_brace`, `statement_position` which were silently added beyond the task spec. Re-enabled with an `identifier_name.min_length` override so short loop counters in the encoders don't trip the rule.
+
+**Files modified by this iteration:**
+
+- `ios/.swiftlint.yml` — match_kinds removed, regex broadened, included_path_regexes removed, identifier_name re-enabled with min_length override
+- `ios/PACKAGES.md` — yaslab/ULID.swift URL + module name documentation
+- `ios/TranslatorRep/IDs/UlidGenerator.swift` — `#if canImport(ULID)` gate, encodeCanonical non-throwing via precondition, upper-bound timestamp check, removed UlidGeneratorError
+- `ios/TranslatorRep/Logging/SafeLog.swift` — `%@` format, runtime bundleIdentifier subsystem, accurate pre-init Crashlytics comment, #if !DEBUG gate on Crashlytics route
+- `android/app/src/main/java/com/xaeryx/translatorrep/logging/SafeLog.kt` — Crashlytics route gated behind `!BuildConfig.DEBUG`
+- `android/app/src/main/java/com/xaeryx/translatorrep/ids/UlidGenerator.kt` — monotonicity-limitations KDoc on `next()`, upper-bound timestamp `require`, MAX_TIMESTAMP_MS constant
+- `android/app/src/test/java/com/xaeryx/translatorrep/ids/UlidGeneratorTest.kt` — sleep 50 ms, timestamp-prefix-only assertion
+- `android/detekt-config.yml` — expanded MatchingDeclarationName comment
+- `android/build.gradle.kts` — future-module detekt wire-up comment
+- `shared/canonical-names.md` — yaslab/ULID.swift URL replaces dead oherrala URL
+- `_bmad-output/implementation-artifacts/1-5-safelog-lint-ulid.md` — test vector block + this Change Log entry
