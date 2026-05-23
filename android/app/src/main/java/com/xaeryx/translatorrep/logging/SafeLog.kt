@@ -45,19 +45,42 @@ object SafeLog {
      */
     fun event(key: AllowedLogKey, value: Any) {
         val wireKey = key.wireKey
-        val stringified = value.toString()
+        val stringified = stringifyDefensively(value)
 
         if (com.xaeryx.translatorrep.BuildConfig.DEBUG) {
             // Debug-build local log — AGP-generated BuildConfig.DEBUG gates this.
             // R8 strips it in release once minification is on (post Epic 4).
             Log.d(LOG_TAG, "$wireKey=$stringified")
         } else {
-            // Release-build Crashlytics custom key. runCatching swallows
-            // IllegalStateException raised when FirebaseCrashlytics.getInstance()
-            // is called before Firebase init (Story 1.4 wires the init).
-            runCatching {
+            // Release-build Crashlytics custom key. The catch is intentionally broad
+            // (RuntimeException) so the facade no-ops on:
+            //   - IllegalStateException — FirebaseCrashlytics.getInstance() called
+            //     before Firebase init (release builds before Story 1.4 wires init).
+            //   - Any other RuntimeException — defensive: a buggy logging path must
+            //     NOT crash the caller. Availability > visibility here.
+            // Throwable is NOT caught so OOM / StackOverflow propagate normally.
+            @Suppress("TooGenericExceptionCaught")
+            try {
                 FirebaseCrashlytics.getInstance().setCustomKey(wireKey, stringified)
+            } catch (e: RuntimeException) {
+                // Intentional broad swallow — see comment above. The `e` parameter
+                // is kept (not `_`) so the suppression remains explicit per detekt.
+                @Suppress("UnusedPrivateMember") val ignored = e
             }
         }
     }
+
+    /**
+     * Convert [value] to a String, never propagating an exception from a buggy
+     * [Any.toString] override. A caller's broken toString must not turn a logging
+     * call into a fault source — return a marker string instead so the event still
+     * lands (degraded but visible) and the caller continues.
+     */
+    private fun stringifyDefensively(value: Any): String =
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            value.toString()
+        } catch (e: RuntimeException) {
+            "<toString-failed:${e.javaClass.simpleName}>"
+        }
 }

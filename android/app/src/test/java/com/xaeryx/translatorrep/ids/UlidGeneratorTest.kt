@@ -60,7 +60,11 @@ class UlidGeneratorTest {
         assertTrue(
             "Expected time-sortable ULIDs: timestamp prefix '$firstTimestampPrefix' " +
                 "(of '$first') should sort <= '$secondTimestampPrefix' (of '$second')",
-            firstTimestampPrefix < secondTimestampPrefix,
+            // Relaxed from `<` to `<=` to match next()'s docstring ("monotonic" not
+            // "strictly monotonic") and the assertion message text. Same-ms case is
+            // already prevented by the 50ms sleep above Windows tick granularity;
+            // NTP-rewind during the sleep would still fail `<=`. Story 1.5 CR fix.
+            firstTimestampPrefix <= secondTimestampPrefix,
         )
     }
 
@@ -87,10 +91,61 @@ class UlidGeneratorTest {
         }
     }
 
+    @Test
+    fun `encodeCanonical rejects negative timestamp`() {
+        try {
+            UlidGenerator.encodeCanonical(-1L, ByteArray(10))
+            fail("Expected IllegalArgumentException for negative timestamp; got success")
+        } catch (e: IllegalArgumentException) {
+            assertTrue(
+                "Unexpected error message: ${e.message}",
+                e.message!!.contains("non-negative"),
+            )
+        }
+    }
+
+    @Test
+    fun `encodeCanonical rejects timestamp exceeding 48 bits`() {
+        // (1L shl 48) == MAX_TIMESTAMP_MS + 1 — first value outside the 48-bit window.
+        try {
+            UlidGenerator.encodeCanonical(MAX_TIMESTAMP_MS_PLUS_ONE, ByteArray(10))
+            fail("Expected IllegalArgumentException for 49-bit timestamp; got success")
+        } catch (e: IllegalArgumentException) {
+            assertTrue(
+                "Unexpected error message: ${e.message}",
+                e.message!!.contains("48 bits"),
+            )
+        }
+    }
+
+    @Test
+    fun `encodeCanonical accepts MAX_TIMESTAMP_MS upper boundary`() {
+        val maxTs = MAX_TIMESTAMP_MS_PLUS_ONE - 1L  // exactly MAX_TIMESTAMP_MS
+        val result = UlidGenerator.encodeCanonical(maxTs, ByteArray(10))
+        assertEquals(ULID_LEN, result.length)
+        assertTrue(
+            "MAX_TIMESTAMP_MS ULID should be canonical Crockford base32; got '$result'",
+            crockfordRegex.matches(result),
+        )
+    }
+
+    @Test
+    fun `encodeCanonical accepts zero timestamp lower boundary`() {
+        val result = UlidGenerator.encodeCanonical(0L, ByteArray(10))
+        assertEquals(ULID_LEN, result.length)
+        assertTrue(
+            "Zero-timestamp ULID should be canonical Crockford base32; got '$result'",
+            crockfordRegex.matches(result),
+        )
+    }
+
     private companion object {
         const val N_SAMPLES = 1000
         const val ULID_LEN = 26
         const val TIMESTAMP_PREFIX_LEN = 10
         const val SLEEP_MS_FOR_MONOTONICITY = 50L
+
+        /** `(1L shl 48)` — the first value outside the 48-bit timestamp window. */
+        const val MAX_TIMESTAMP_MS_PLUS_ONE: Long = 1L shl 48
     }
 }

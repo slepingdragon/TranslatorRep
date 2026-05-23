@@ -35,7 +35,14 @@ object UlidGenerator {
      *   with the call order. Switching to `SystemClock.elapsedRealtime()` + a monotonic
      *   epoch base would resolve this for in-call ordering.
      */
-    fun next(): String = ULID.randomULID(System.currentTimeMillis())
+    fun next(): String =
+        // coerceAtLeast(0L) guards against a misconfigured device clock returning
+        // a negative epoch (rare but possible — e.g., on a device whose battery
+        // died and clock reset, or a buggy NTP step). The library's encodeCanonical
+        // rejects negative timestamps with IllegalArgumentException; this coerce
+        // ensures next() never throws on the wall-clock path. Same-instant collision
+        // risk for the brief window post-coerce is acceptable at 2-user scale.
+        ULID.randomULID(System.currentTimeMillis().coerceAtLeast(0L))
 
     /**
      * Spec-correct ULID encoding from explicit (48-bit timestamp, 80-bit random).

@@ -10,12 +10,14 @@ Items raised during code review that were classified as `defer` (real but not ac
 
 ### Android / Kotlin
 
-- **`SafeLog.kt` Crashlytics route: `runCatching { }` catches every `Throwable`, comment says only `IllegalStateException`.** The pre-init Crashlytics path explicitly documents that it's catching `IllegalStateException` from a not-yet-initialized Firebase. Tighten to `try { ... } catch (e: IllegalStateException) { ... }` so that genuine bugs in Crashlytics (NPE, OOM, etc.) surface in CI rather than being silently swallowed in prod. — [android/app/src/main/java/com/xaeryx/translatorrep/logging/SafeLog.kt]
-- **`SafeLog.event` doesn't guard `value.toString()` throws.** If a caller passes an object whose `toString()` throws (overriden + buggy), the logging call itself becomes the fault source. Wrap with `runCatching { value.toString() }.getOrDefault("<toString-failed>")`. — [android/app/src/main/java/com/xaeryx/translatorrep/logging/SafeLog.kt]
-- **`UlidGenerator.next()` doesn't guard `System.currentTimeMillis()` returning negative on bizarre device clocks.** Library may throw or produce malformed ULID. Coerce to `>= 0L` defensively. — [android/app/src/main/java/com/xaeryx/translatorrep/ids/UlidGenerator.kt:38]
-- **`UlidGeneratorTest` 50ms-sleep + strict `<` assertion is theoretically flaky under NTP step.** If the system clock is corrected backward during the sleep, the prefix-comparison fails. Either retry once on regression, or relax to `<=` (which is the actually-correct contract per the new "monotonic" docstring). — [android/app/src/test/java/com/xaeryx/translatorrep/ids/UlidGeneratorTest.kt]
-- **`UlidGeneratorTest` test message says `<=` but assertion uses strict `<`.** Mismatch between assertion semantics and the error-message text. Trivial fix in test prose. — [android/app/src/test/java/com/xaeryx/translatorrep/ids/UlidGeneratorTest.kt]
-- **`encodeCanonical` `MAX_TIMESTAMP_MS` upper-bound + negative-timestamp paths are not exercised by tests.** New `require()` branches in the encode helper ship untested; regression in the bound check would go undetected. Add boundary tests. — [android/app/src/test/java/com/xaeryx/translatorrep/ids/UlidGeneratorTest.kt]
+**All 6 items below LANDED 2026-05-23 in branch `chore/1-5-cr-defer-fixes-android`.** Kept here struck-through for traceability; remove on next clean-up pass.
+
+- ~~**`SafeLog.kt` Crashlytics route: `runCatching { }` catches every `Throwable`, comment says only `IllegalStateException`.**~~ ✅ Fixed: narrowed to `catch (e: RuntimeException)` with explicit "availability > visibility" rationale comment; `OutOfMemoryError` / `StackOverflowError` propagate normally.
+- ~~**`SafeLog.event` doesn't guard `value.toString()` throws.**~~ ✅ Fixed: introduced `stringifyDefensively(value)` private helper that returns `"<toString-failed:<ExceptionClass>>"` on `RuntimeException` so a buggy caller-`toString()` can't turn the logging path into a fault source.
+- ~~**`UlidGenerator.next()` doesn't guard `System.currentTimeMillis()` returning negative on bizarre device clocks.**~~ ✅ Fixed: `coerceAtLeast(0L)` on the timestamp argument with rationale comment.
+- ~~**`UlidGeneratorTest` 50ms-sleep + strict `<` assertion is theoretically flaky under NTP step.**~~ ✅ Fixed (same edit as below): relaxed assertion to `<=` which matches `next()`'s "monotonic" (not "strictly monotonic") docstring + the assertion-message text. NTP-rewind during the sleep would still fail `<=`.
+- ~~**`UlidGeneratorTest` test message says `<=` but assertion uses strict `<`.**~~ ✅ Fixed (combined with above): assertion now uses `<=`, so message text matches semantics.
+- ~~**`encodeCanonical` `MAX_TIMESTAMP_MS` upper-bound + negative-timestamp paths are not exercised by tests.**~~ ✅ Fixed: added 4 boundary tests — `rejects negative timestamp`, `rejects timestamp exceeding 48 bits`, `accepts MAX_TIMESTAMP_MS upper boundary`, `accepts zero timestamp lower boundary`. Test count: 7 → 11.
 
 ### iOS / Swift
 
