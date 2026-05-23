@@ -1,0 +1,47 @@
+# .github/workflows/ios-ci.yml
+# DEFERRED to Story 1.6b — depends on Story 1.2 (Xcode project on Mac).
+# Source of truth: architecture.md §"CI/CD Per Stack" row 2.
+# Owning story (stub): 1-6-cicd-per-stack. Owning story (full): 1-6b-ios-ci-flesh-out.
+#
+# When Story 1.6b lights this up, replace the stub job with these steps in order
+# (per architecture.md §"CI/CD Per Stack" row 2):
+#   1. SwiftLint (uses .swiftlint.yml from Story 1.5)
+#   2. xcodebuild test (TranslatorRep + TranslatorRepTests schemes)
+#   3. snapshot tests (point-free or yaslab pattern, decision in Story 1.6b)
+#   4. archive (TestFlight Ad Hoc on tag push)
+# AND flip `runs-on: ubuntu-latest` back to `macos-latest` (xcodebuild needs macOS).
+name: ios-ci
+
+on:
+  pull_request:
+    paths:
+      - 'ios/**'
+      - 'shared/**'
+      - '.github/workflows/ios-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ios/**'
+      - 'shared/**'
+      - '.github/workflows/ios-ci.yml'
+  workflow_dispatch: {}
+
+concurrency:
+  group: ios-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios-ci-stub:
+    # TODO(Story 1.6b): flip back to `macos-latest` when xcodebuild lands.
+    # Running on ubuntu while the stub is just `echo` saves 10× billing —
+    # macos-latest minutes are billed at 10× ubuntu rate, and there's no
+    # xcodebuild call yet to justify the macOS runner.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: deferral-notice
+        run: |
+          echo "iOS CI deferred to Story 1.6b — Xcode project lands in Story 1.2."
+          echo "Stub passes so iOS PRs aren't blocked. See docs/runbooks/ci-stack-overview.md."

@@ -1,0 +1,14 @@
+# .gitattributes — line-ending normalization
+#
+# Created by Story 1.6 CR (PR #3, 2026-05-23) as belt-and-suspenders for
+# the gradlew exec-bit fix (commit 2857d3a). Git for Windows can silently
+# convert shebang scripts to CRLF on commit, which makes them un-executable
+# on Linux CI runners regardless of the index mode. Pinning LF here keeps
+# the wrapper script POSIX-compatible.
+#
+# Scoped narrowly to the gradle wrapper to avoid triggering a one-time mass
+# conversion of existing files (which a project-wide `* text=auto eol=lf`
+# would do).
+
+android/gradlew      text eol=lf
+android/gradlew.bat  text eol=crlf

@@ -18,7 +18,8 @@ excluded:
   - .build                        # SPM build dir
   - "**/Generated"                # auto-generated code (e.g. from .proto if we ever add)
 
-# Default-noisy style rules — explicitly disabled for v1 solo dev
+# Default-noisy style rules — explicitly disabled for v1 solo dev.
+# Scope authorized by Story 1.5 Task 12.2 + a tight set of well-known noisy defaults.
 disabled_rules:
   - line_length                   # we'll review long lines in code review, not here
   - trailing_comma                # Swift 5.9+ permits both
@@ -28,10 +29,6 @@ disabled_rules:
   - nesting
   - cyclomatic_complexity         # solo dev; profile-driven, not lint-driven
   - todo                          # we use TODO Story X.Y deliberately
-  - identifier_name               # naming policed by canonical-names.md, not lint
-  - vertical_whitespace
-  - opening_brace
-  - statement_position
 
 # Keep these on — free signal on real issues
 opt_in_rules:
@@ -46,17 +43,30 @@ opt_in_rules:
   - overridden_super_call
   - prohibited_super_call
 
+# identifier_name allows short loop counters (`i`, `bit`) used in UlidGenerator
+# encoders; otherwise default min_length=3 would fire on those.
+identifier_name:
+  min_length:
+    warning: 1
+    error: 1
+
 # Custom rules
 custom_rules:
   forbid_direct_ios_logging:
     name: "Direct iOS logging APIs forbidden outside SafeLog"
-    regex: '\b(print|os_log|Logger)\s*\('
+    # Two alternations:
+    #   1. Bare-function/constructor form: print(, os_log(, Logger(, NSLog(, debugPrint(, dump(
+    #   2. Method-style form on a pre-constructed Logger/OSLog: foo.log(, foo.info(, foo.debug(...
+    # The second alternation catches the bypass where someone stashes a Logger via DI
+    # and then calls `appLogger.info("...")` from a non-SafeLog file.
+    regex: '\b(print|os_log|NSLog|debugPrint|dump|Logger)\s*\(|\.(log|debug|info|notice|warning|error|critical|fault|trace)\s*\('
     excluded: '.*/Logging/SafeLog\.swift'
     message: "Use SafeLog.event(_:_) instead — see architecture §14 and Logging/SafeLog.swift."
     severity: error
-    match_kinds:
-      - identifier
-      - typeidentifier
+    # NOTE: match_kinds intentionally OMITTED. SwiftLint filters out a match if any
+    # syntax-kind in the matched range is outside the listed kinds — and the
+    # trailing `(` is `punctuation`, which would reject every match and silently
+    # disable this rule entirely.
 
 # Per-rule overrides (severity tuning)
 force_unwrapping:
@@ -65,7 +75,3 @@ force_cast:
   severity: error
 force_try:
   severity: warning      # warning rather than error — sometimes try? is more verbose
-
-# Allow !-suffixed unwrapping inside tests where it's idiomatic XCTest pattern
-included_path_regexes:
-  # n/a — handled via the test target's own SwiftLint config if it ever needs different rules

@@ -1,0 +1,95 @@
+# .github/workflows/android-ci.yml
+# Source of truth: architecture.md §"CI/CD Per Stack" row 1.
+# Owning story: 1-6-cicd-per-stack (Story 1.6d will add Compose UI tests + Roborazzi + assembleRelease — see runbook §4).
+name: android-ci
+
+on:
+  pull_request:
+    paths:
+      - 'android/**'
+      - 'shared/**'
+      - '.github/workflows/android-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - 'shared/**'
+      - '.github/workflows/android-ci.yml'
+  workflow_dispatch: {}
+
+# Cancel in-flight runs on the same ref when a new push arrives.
+# Solo-dev free-tier minute budget — every superseded run is wasted minutes.
+concurrency:
+  group: android-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: android
+
+jobs:
+  android-ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Required by mikepenz/action-junit-report to publish PR Checks-tab
+    # annotations. Without `checks: write`, the action runs but logs a 403
+    # warning and the PR shows raw Gradle logs instead of inline failures.
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          # Validate gradle-wrapper.jar SHA against Gradle's published list —
+          # defense-in-depth against a tampered wrapper jar landing in the repo.
+          validate-wrappers: true
+          # PR branches read from the shared cache but don't write to it —
+          # prevents a buggy or malicious PR from poisoning main's cache.
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      # Belt-and-suspenders for the gradlew exec-bit fix (story 1.6 Bug #1).
+      # The git index has mode 100755, but a future Windows commit could
+      # silently re-strip it; this ensures CI always proceeds either way.
+      - name: ensure-gradlew-executable
+        run: chmod +x ./gradlew
+
+      - name: detekt
+        run: ./gradlew :app:detekt --no-daemon
+
+      - name: unit-tests
+        run: ./gradlew :app:testDebugUnitTest --no-daemon
+
+      - name: assemble-debug
+        run: ./gradlew :app:assembleDebug --no-daemon
+
+      - name: publish-junit-report
+        if: always()
+        # SHA-pinned for supply-chain hardening (third-party action).
+        # Tracks v4 floating tag as of 2026-05-23 — bump deliberately, not silently.
+        uses: mikepenz/action-junit-report@db71d41eb79864e25ab0337e395c352e84523afe  # v4
+        with:
+          report_paths: 'android/app/build/test-results/**/*.xml'
+          # Fail the step if no XML files are found (compile blew up before any
+          # test ran) AND fail the step if any tests failed (don't just annotate).
+          require_tests: true
+          fail_on_failure: true
+
+      - name: upload-debug-apk
+        uses: actions/upload-artifact@v4
+        with:
+          # run_attempt disambiguates re-runs of the same SHA — upload-artifact@v4
+          # errors on duplicate artifact names within the same workflow run.
+          name: app-debug-apk-${{ github.sha }}-${{ github.run_attempt }}
+          path: android/app/build/outputs/apk/debug/*.apk
+          retention-days: 7
+          # Fail loudly if assemble-debug succeeded but somehow produced no APK
+          # (the AC-4 silent-pass trap that default `warn` would let through).
+          if-no-files-found: error

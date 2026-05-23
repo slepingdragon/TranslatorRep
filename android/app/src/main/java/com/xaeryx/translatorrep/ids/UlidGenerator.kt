@@ -19,7 +19,22 @@ import ulid.ULID
  */
 object UlidGenerator {
 
-    /** Generate a fresh canonical 26-char Crockford base32 ULID using the current time. */
+    /**
+     * Generate a fresh canonical 26-char Crockford base32 ULID using the current time.
+     *
+     * **Known limitations** (acceptable at the 2-user-per-pair scale per architecture §4,
+     * documented here for future scaling work):
+     *
+     * - **Within-millisecond monotonicity is NOT guaranteed.** Two `next()` calls in
+     *   the same ms share a 10-char timestamp prefix; lex order of the 16-char random
+     *   tail is independent per call (random). A pure-spec strict-monotonic factory
+     *   would be needed for ordered same-ms ID generation.
+     * - **Wall-clock dependence (not monotonic clock).** `System.currentTimeMillis()`
+     *   can move backward across NTP corrections or manual clock changes. Two `next()`
+     *   calls separated by an NTP rewind can produce ULIDs whose lex order disagrees
+     *   with the call order. Switching to `SystemClock.elapsedRealtime()` + a monotonic
+     *   epoch base would resolve this for in-call ordering.
+     */
     fun next(): String = ULID.randomULID(System.currentTimeMillis())
 
     /**
@@ -31,8 +46,8 @@ object UlidGenerator {
      * The Crockford base32 alphabet is `0123456789ABCDEFGHJKMNPQRSTVWXYZ` (32 chars;
      * excludes I, L, O, U to avoid visual ambiguity).
      *
-     * @param timestampMs Unix epoch milliseconds; must fit in 48 bits (≤ 2^48 − 1,
-     *   i.e. before year 10889 — practically unbounded). Higher bits are masked off.
+     * @param timestampMs Unix epoch milliseconds. Must be in `[0, 2^48 − 1]` — values
+     *   outside this range throw IllegalArgumentException (no silent truncation).
      * @param random80BitBigEndian Exactly 10 bytes (80 bits) of random material in
      *   big-endian byte order. Anything other than 10 bytes throws IllegalArgumentException.
      * @return The canonical 26-character ULID string.
@@ -45,6 +60,9 @@ object UlidGenerator {
             "ULID random portion must be exactly 10 bytes (80 bits); got ${random80BitBigEndian.size}"
         }
         require(timestampMs >= 0) { "timestampMs must be non-negative; got $timestampMs" }
+        require(timestampMs <= MAX_TIMESTAMP_MS) {
+            "timestampMs must fit in 48 bits (≤ $MAX_TIMESTAMP_MS); got $timestampMs"
+        }
 
         // Lay out 128 bits as a 16-byte buffer: 6-byte big-endian timestamp || 10-byte random.
         val buf = ByteArray(16)
@@ -71,6 +89,7 @@ object UlidGenerator {
     }
 
     private const val ULID_LEN = 26
+    private const val MAX_TIMESTAMP_MS: Long = (1L shl 48) - 1L
 
     /**
      * Extract 5 bits from [buf] starting at [bitOffsetFromLeft] (counting from the

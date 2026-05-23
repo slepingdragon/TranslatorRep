@@ -22,10 +22,11 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
  *
  * Two output routes:
  *
- * 1. Crashlytics custom keys (production builds) — appears in crash reports' "Keys"
- *    section under the snake_case wire form of the [AllowedLogKey]. Wrapped in
- *    [runCatching] so pre-Firebase-init builds (anything before Story 1.4 finishes)
- *    no-op gracefully rather than crash.
+ * 1. Crashlytics custom keys (release builds only) — appears in crash reports' "Keys"
+ *    section under the snake_case wire form of the [AllowedLogKey]. Gated on
+ *    `!BuildConfig.DEBUG` so debug-session noise never lands in the production
+ *    Crashlytics dashboard. Wrapped in [runCatching] so pre-Firebase-init release
+ *    builds (anything before Story 1.4 finishes) no-op gracefully rather than crash.
  * 2. android.util.Log.d (debug builds, via `BuildConfig.DEBUG`) — for local
  *    development visibility. In release builds R8 strips this once `isMinifyEnabled`
  *    is flipped (post Epic 4).
@@ -46,17 +47,17 @@ object SafeLog {
         val wireKey = key.wireKey
         val stringified = value.toString()
 
-        // Debug-build local log — gated by Android's BuildConfig.DEBUG which the AGP
-        // plugin generates per module. R8 strips this in release once minification is on.
         if (com.xaeryx.translatorrep.BuildConfig.DEBUG) {
+            // Debug-build local log — AGP-generated BuildConfig.DEBUG gates this.
+            // R8 strips it in release once minification is on (post Epic 4).
             Log.d(LOG_TAG, "$wireKey=$stringified")
-        }
-
-        // Crashlytics route — robust to pre-init state (Story 1.4 wires
-        // FirebaseApp.initializeApp; before then this getInstance call may throw
-        // IllegalStateException which we swallow).
-        runCatching {
-            FirebaseCrashlytics.getInstance().setCustomKey(wireKey, stringified)
+        } else {
+            // Release-build Crashlytics custom key. runCatching swallows
+            // IllegalStateException raised when FirebaseCrashlytics.getInstance()
+            // is called before Firebase init (Story 1.4 wires the init).
+            runCatching {
+                FirebaseCrashlytics.getInstance().setCustomKey(wireKey, stringified)
+            }
         }
     }
 }
