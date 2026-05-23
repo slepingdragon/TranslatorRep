@@ -1,0 +1,32 @@
+# .github/workflows/infra-ci.yml
+# DEFERRED to Story 1.6c — depends on Story 1.3 (Oracle VM + infra/ directory).
+# Source of truth: architecture.md §"CI/CD Per Stack" row 3.
+# Owning story (stub): 1-6-cicd-per-stack. Owning story (full): 1-6c-infra-ci-flesh-out.
+#
+# When Story 1.6c lights this up, replace the stub job with these steps in order
+# (per architecture.md §"CI/CD Per Stack" row 3):
+#   1. yamllint infra/livekit.yaml + infra/Caddyfile
+#   2. docker compose -f infra/docker-compose.yml config  (validation only, no `up`)
+#   3. on tag push only: ssh oracle-vm && ./infra/scripts/deploy.sh
+name: infra-ci
+
+on:
+  pull_request:
+    paths:
+      - 'infra/**'
+  push:
+    branches: [main]
+    paths:
+      - 'infra/**'
+  workflow_dispatch: {}
+
+jobs:
+  infra-ci-stub:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: deferral-notice
+        run: |
+          echo "Infra CI deferred to Story 1.6c — Oracle VM + infra/ directory land in Story 1.3."
+          echo "Stub passes so infra PRs aren't blocked. See docs/runbooks/ci-stack-overview.md."
+          exit 0

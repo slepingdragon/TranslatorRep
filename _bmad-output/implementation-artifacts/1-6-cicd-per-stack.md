@@ -1,6 +1,6 @@
 # Story 1.6: CI/CD Per Stack
 
-Status: ready-for-dev
+Status: in-progress
 
 <!-- Created 2026-05-23 by bmad-create-story workflow (run inline). Validation optional; run bmad-create-story:validate before bmad-dev-story if desired. -->
 

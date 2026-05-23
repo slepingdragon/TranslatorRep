@@ -1,0 +1,35 @@
+# .github/workflows/ios-ci.yml
+# DEFERRED to Story 1.6b — depends on Story 1.2 (Xcode project on Mac).
+# Source of truth: architecture.md §"CI/CD Per Stack" row 2.
+# Owning story (stub): 1-6-cicd-per-stack. Owning story (full): 1-6b-ios-ci-flesh-out.
+#
+# When Story 1.6b lights this up, replace the stub job with these steps in order
+# (per architecture.md §"CI/CD Per Stack" row 2):
+#   1. SwiftLint (uses .swiftlint.yml from Story 1.5)
+#   2. xcodebuild test (TranslatorRep + TranslatorRepTests schemes)
+#   3. snapshot tests (point-free or yaslab pattern, decision in Story 1.6b)
+#   4. archive (TestFlight Ad Hoc on tag push)
+name: ios-ci
+
+on:
+  pull_request:
+    paths:
+      - 'ios/**'
+      - 'shared/**'
+  push:
+    branches: [main]
+    paths:
+      - 'ios/**'
+      - 'shared/**'
+  workflow_dispatch: {}
+
+jobs:
+  ios-ci-stub:
+    runs-on: macos-latest  # locked in for 1.6b's xcodebuild
+    timeout-minutes: 5
+    steps:
+      - name: deferral-notice
+        run: |
+          echo "iOS CI deferred to Story 1.6b — Xcode project lands in Story 1.2."
+          echo "Stub passes so iOS PRs aren't blocked. See docs/runbooks/ci-stack-overview.md."
+          exit 0
