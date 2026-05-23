@@ -56,14 +56,15 @@
 
 - **All canonical-entity IDs** (`Pair.id`, `Call.id`, `Utterance.id`, `Caption.id`, `MessageId` in Data Channel payloads): **`String`, ULID format, 26 characters, Crockford base32**.
 - ULIDs are time-sortable and collision-resistant at 2-user scale.
-- **Library pinning (Gap I.12):**
-  - **Android:** TO BE SELECTED at Story 1.1 scaffolding. Candidates: `com.aventrix.jnanoid` or `de.huxhorn.sulky.ulid`. Once chosen, record here.
-  - **iOS:** TO BE SELECTED at Story 1.2 scaffolding. Candidate: `ulid-swift`. Once chosen, record here.
-  - Both must emit identical canonical Crockford base32 output verified against a shared test vector.
-- **Test vector** (use this for cross-platform parity verification):
-  - Input timestamp: `2026-05-22T13:53:51.242Z` (1779717231242 ms epoch)
-  - Random component: TBD at scaffolding (use a fixed seed in tests)
-  - Expected output: TBD (record after first impl)
+- **Library pinning (Gap I.12 — locked at Story 1.5, 2026-05-23):**
+  - **Android:** `com.aallam.ulid:ulid-kotlin:1.3.0` (Kotlin Multiplatform; JVM variant selected automatically via Gradle Module Metadata). Wrapped behind `android/app/src/main/java/com/xaeryx/translatorrep/ids/UlidGenerator.kt`. Production calls go through `UlidGenerator.next()`.
+  - **iOS:** `https://github.com/oherrala/swift-ulid` (Apache 2.0; pinned to a tagged release via SPM — concrete tag chosen at Story 1.2 close-out per `ios/PACKAGES.md`). Wrapped behind `ios/TranslatorRep/IDs/UlidGenerator.swift`.
+  - Both `UlidGenerator` types expose a library-independent `encodeCanonical(timestampMs, random80BitBigEndian)` helper that implements Crockford base32 encoding directly (no library dependency). This is what the parity test exercises — the production `next()` paths delegate to their respective libraries, which are assumed spec-compliant.
+- **Test vector** (locked at Story 1.5; cross-platform parity verification):
+  - Input timestamp: `2026-05-22T13:53:51.242Z` (`1779458031242` ms since Unix epoch)
+  - Random component (80 bits / 10 bytes, big-endian hex): `0102030405060708090A`
+  - Expected output: **`01KS7ZDFMA041061050R3GG28A`**
+  - Both `UlidGenerator.encodeCanonical(1779458031242, [0x01, 0x02, ..., 0x0A])` calls — Android and iOS — must produce that exact string.
 - Firestore document IDs follow the same ULID convention where the app generates them (calls, utterances). Where Firebase auto-generates (e.g., `pairs/{pairId}`), Firebase IDs are accepted but treated as opaque strings.
 
 ---

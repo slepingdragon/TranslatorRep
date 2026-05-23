@@ -1,0 +1,71 @@
+# SwiftLint configuration — TranslatorRep Story 1.5
+#
+# Strategy: solo-dev maximum signal-to-noise. The ONE rule we actually care about is
+# `forbid_direct_ios_logging` (custom rule below) which bans `print`, `os_log`, and
+# `Logger` references outside Logging/SafeLog.swift. Everything else is tuned to
+# keep CI signal real-failure-only — no style policing.
+#
+# See architecture.md §14, Story 1.5 dev notes, /shared/canonical-names.md §2.
+
+# Sources to lint
+included:
+  - TranslatorRep
+  - TranslatorRepTests
+  - TranslatorRepUITests
+
+excluded:
+  - Pods                          # if CocoaPods is ever added (architecture: NO — SPM only)
+  - .build                        # SPM build dir
+  - "**/Generated"                # auto-generated code (e.g. from .proto if we ever add)
+
+# Default-noisy style rules — explicitly disabled for v1 solo dev
+disabled_rules:
+  - line_length                   # we'll review long lines in code review, not here
+  - trailing_comma                # Swift 5.9+ permits both
+  - type_body_length
+  - file_length
+  - function_body_length
+  - nesting
+  - cyclomatic_complexity         # solo dev; profile-driven, not lint-driven
+  - todo                          # we use TODO Story X.Y deliberately
+  - identifier_name               # naming policed by canonical-names.md, not lint
+  - vertical_whitespace
+  - opening_brace
+  - statement_position
+
+# Keep these on — free signal on real issues
+opt_in_rules:
+  - force_unwrapping              # ban ! outside tests
+  - force_cast                    # ban `as!` outside tests
+  - force_try                     # ban `try!` outside tests
+  - empty_count
+  - empty_string
+  - first_where
+  - last_where
+  - implicitly_unwrapped_optional # ban `var foo: Foo!`
+  - overridden_super_call
+  - prohibited_super_call
+
+# Custom rules
+custom_rules:
+  forbid_direct_ios_logging:
+    name: "Direct iOS logging APIs forbidden outside SafeLog"
+    regex: '\b(print|os_log|Logger)\s*\('
+    excluded: '.*/Logging/SafeLog\.swift'
+    message: "Use SafeLog.event(_:_) instead — see architecture §14 and Logging/SafeLog.swift."
+    severity: error
+    match_kinds:
+      - identifier
+      - typeidentifier
+
+# Per-rule overrides (severity tuning)
+force_unwrapping:
+  severity: error
+force_cast:
+  severity: error
+force_try:
+  severity: warning      # warning rather than error — sometimes try? is more verbose
+
+# Allow !-suffixed unwrapping inside tests where it's idiomatic XCTest pattern
+included_path_regexes:
+  # n/a — handled via the test target's own SwiftLint config if it ever needs different rules

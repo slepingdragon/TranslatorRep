@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.detekt)
     // Firebase plugins disabled until Story 1.4 lands `google-services.json`
     // at `app/google-services.json`. UN-COMMENT both lines at Story 1.4:
     //   alias(libs.plugins.google.services)
@@ -71,6 +72,29 @@ android {
     // dynamicDarkColorScheme/dynamicLightColorScheme.
 }
 
+// Story 1.5 — detekt + custom ForbiddenImport rule banning android.util.Log.* and
+// timber.log.Timber.* outside `logging/SafeLog.kt`. The actual rule config lives in
+// `android/detekt-config.yml`; this block just points the plugin at it.
+detekt {
+    buildUponDefaultConfig = true
+    allRules = false
+    config.setFrom(files("$rootDir/detekt-config.yml"))
+    baseline = file("$rootDir/detekt-baseline.xml").takeIf { it.exists() }
+    parallel = true
+    autoCorrect = false
+}
+
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    jvmTarget = "17"
+    reports {
+        html.required.set(true)
+        sarif.required.set(false)
+        txt.required.set(false)
+        xml.required.set(false)
+        md.required.set(false)
+    }
+}
+
 dependencies {
     // Compose BOM — single source of truth for Compose artifact versions
     implementation(platform(libs.androidx.compose.bom))
@@ -91,6 +115,10 @@ dependencies {
     // LiveKit Android SDK — WebRTC media + Data Channel + Insertable Streams
     // (Architecture ADR-A1 + ADR-A2). Pinned per architecture.md addendum.
     implementation(libs.livekit.android)
+
+    // ULID — Crockford base32 26-char time-sortable IDs (Story 1.5 + architecture §4)
+    // Wrapped behind ids/UlidGenerator.kt; callers never touch the library directly.
+    implementation(libs.ulid.kotlin)
 
     // Firebase — BOM-managed; Story 1.4 wires actual usage
     implementation(platform(libs.firebase.bom))

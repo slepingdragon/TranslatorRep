@@ -26,7 +26,12 @@ class TranslatorRepApplication : Application() {
         //                 google-services.json being present.
         // TODO Story 1.4: Firebase.initialize App Check (Play Integrity in
         //                 release, DebugAppCheckProviderFactory in debug).
-        // TODO Story 1.5: Initialize SafeLog facade + AllowedLogKey enum.
+        // TODO Story 1.4: CrashlyticsConfig.configure(this) — once Firebase is
+        //                 initialized; see logging/CrashlyticsConfig.kt.
+        // SafeLog (Story 1.5) needs no Application-startup wiring — it's a
+        // top-level object that lazily reaches Crashlytics via runCatching, so
+        // pre-Firebase-init calls are graceful no-ops on the Crashlytics route
+        // (debug Log.d still emits). See logging/SafeLog.kt.
         // TODO Story 1.8: signInAnonymously() before any UI renders.
     }
 }

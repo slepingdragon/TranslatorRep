@@ -1,0 +1,160 @@
+# Story 1.5 — detekt config tuned for solo-dev maximum signal-to-noise.
+#
+# The single rule we actually care about here is ForbiddenImport (style.ForbiddenImport)
+# which bans direct `android.util.Log.*` and `timber.log.Timber.*` outside the
+# SafeLog facade. See architecture.md §14 + this project's CLAUDE.md guidance.
+#
+# All other rulesets are intentionally turned off for v1 (style policing wastes time
+# for a solo dev who'll iterate on idioms anyway). `naming` + `potential-bugs` stay
+# on — both are zero-churn signal.
+
+build:
+  maxIssues: 0
+  excludeCorrectable: false
+  weights:
+    # Treat ForbiddenImport as a build-failing issue (default behavior; explicit for clarity)
+
+config:
+  validation: true
+  warningsAsErrors: false
+  # Suppress complaints about rulesets we've intentionally disabled below
+  excludes: ''
+
+processors:
+  active: true
+  exclude:
+    - 'DetektProgressListener'
+
+console-reports:
+  active: true
+  exclude:
+    - 'NotificationReport'
+    - 'FindingsReport'
+  # Use FileBasedFindingsReport for compact output
+
+complexity:
+  active: false   # solo dev, defer style policing
+
+style:
+  active: true
+  # Disable everything by default; enable only ForbiddenImport (our SafeLog gate).
+  # Re-enable individual rules later if they pull their weight.
+  MaxLineLength:
+    active: false
+  MagicNumber:
+    active: false
+  ReturnCount:
+    active: false
+  UnusedPrivateMember:
+    active: false
+  WildcardImport:
+    active: false
+  NewLineAtEndOfFile:
+    active: false
+  ForbiddenImport:
+    active: true
+    # SafeLog.kt is the ONLY file in the codebase allowed to import android.util.Log.
+    # This is the entire point of Story 1.5's lint enforcement.
+    excludes:
+      - '**/logging/SafeLog.kt'
+    imports:
+      - reason: 'Direct android.util.Log.* calls are forbidden. Use SafeLog.event(AllowedLogKey, value) instead. See architecture §14.'
+        value: 'android.util.Log'
+      - reason: 'Direct Timber.* calls are forbidden. Use SafeLog.event(AllowedLogKey, value) instead. See architecture §14.'
+        value: 'timber.log.Timber'
+    forbiddenPatterns: ''
+
+  # Default-noisy style rules — explicitly off
+  OptionalAbstractKeyword:
+    active: false
+  OptionalUnit:
+    active: false
+  ProtectedMemberInFinalClass:
+    active: false
+  RedundantVisibilityModifierRule:
+    active: false
+  UnnecessaryAbstractClass:
+    active: false
+  UnnecessaryParentheses:
+    active: false
+
+# Naming conventions — free signal on Kotlin idioms (class names, function names, etc.)
+naming:
+  active: true
+  ClassNaming:
+    active: true
+  ConstructorParameterNaming:
+    active: true
+  EnumNaming:
+    active: true
+  FunctionNaming:
+    active: true
+    # @Composable functions idiomatically use PascalCase (Compose convention) —
+    # this is the standard detekt + Compose interop pattern.
+    ignoreAnnotated:
+      - 'Composable'
+      - 'Preview'
+  MatchingDeclarationName:
+    active: false   # too restrictive when a Compose file pairs a fun with an enum
+  FunctionParameterNaming:
+    active: true
+  ObjectPropertyNaming:
+    active: true
+  PackageNaming:
+    active: true
+  TopLevelPropertyNaming:
+    active: true
+  VariableNaming:
+    active: true
+
+# Potential bugs — free signal on real issues (not style)
+potential-bugs:
+  active: true
+  Deprecation:
+    active: true
+  EqualsAlwaysReturnsTrueOrFalse:
+    active: true
+  EqualsWithHashCodeExist:
+    active: true
+  ExplicitGarbageCollectionCall:
+    active: true
+  HasPlatformType:
+    active: false
+  ImplicitDefaultLocale:
+    active: true
+  ImplicitUnitReturnType:
+    active: false
+  IteratorHasNextCallsNextMethod:
+    active: true
+  IteratorNotThrowingNoSuchElementException:
+    active: true
+  LateinitUsage:
+    active: false
+  MapGetWithNotNullAssertionOperator:
+    active: true
+  UnconditionalJumpStatementInLoop:
+    active: true
+  UnreachableCatchBlock:
+    active: true
+  UnsafeCallOnNullableType:
+    active: false   # too noisy for solo dev; rely on Kotlin null safety + manual review
+  UnsafeCast:
+    active: true
+  UnusedUnaryOperator:
+    active: true
+  UselessPostfixExpression:
+    active: true
+  WrongEqualsTypeParameter:
+    active: true
+
+# Off for v1
+empty-blocks:
+  active: false
+exceptions:
+  active: false
+performance:
+  active: false
+comments:
+  active: false
+coroutines:
+  active: false
