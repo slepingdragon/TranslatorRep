@@ -1,7 +1,7 @@
 package com.xaeryx.translatorrep
 
+import org.junit.Assert.assertEquals
 import org.junit.Test
-import kotlin.test.assertEquals
 
 /**
  * SMOKE TEST — Story 1.6 AC-5 #2: this test must fail on the
@@ -12,6 +12,6 @@ import kotlin.test.assertEquals
 class SmokeTestForceFail {
     @Test
     fun smokeTest_intentional_failure_for_AC5_validation() {
-        assertEquals(1, 2, "Story 1.6 AC-5 smoke: this assertion must fail")
+        assertEquals("Story 1.6 AC-5 smoke: this assertion must fail", 1L, 2L)
     }
 }
