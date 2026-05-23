@@ -14,19 +14,26 @@ on:
   pull_request:
     paths:
       - 'infra/**'
+      - '.github/workflows/infra-ci.yml'
   push:
     branches: [main]
     paths:
       - 'infra/**'
+      - '.github/workflows/infra-ci.yml'
   workflow_dispatch: {}
+
+concurrency:
+  group: infra-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   infra-ci-stub:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
     steps:
       - name: deferral-notice
         run: |
           echo "Infra CI deferred to Story 1.6c — Oracle VM + infra/ directory land in Story 1.3."
           echo "Stub passes so infra PRs aren't blocked. See docs/runbooks/ci-stack-overview.md."
-          exit 0

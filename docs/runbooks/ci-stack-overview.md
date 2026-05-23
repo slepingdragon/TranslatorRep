@@ -8,11 +8,11 @@
 
 | Workflow file | Trigger paths | Today's scope | Owning story | Follow-up story |
 |---|---|---|---|---|
-| `.github/workflows/android-ci.yml` | `android/**`, `shared/**` | **Full:** checkout → JDK 17 (Temurin) → Gradle 8.10.2 (wrapper) → `detekt` → `testDebugUnitTest` → `assembleDebug` → JUnit XML annotations → APK artifact upload (7-day retention). | 1-6-cicd-per-stack | — (signing-config / `assembleRelease` deferred to potential Story 1.6d) |
-| `.github/workflows/ios-ci.yml` | `ios/**`, `shared/**` | **Stub.** Single `echo` step on `macos-latest`. Exits 0 to keep PRs unblocked. | 1-6-cicd-per-stack | 1-6b-ios-ci-flesh-out (sequenced after Story 1.2 lands the Xcode project on Mac) |
-| `.github/workflows/infra-ci.yml` | `infra/**` | **Stub.** Single `echo` step on `ubuntu-latest`. Exits 0 to keep PRs unblocked. | 1-6-cicd-per-stack | 1-6c-infra-ci-flesh-out (sequenced after Story 1.3 lands the Oracle VM + `infra/` directory) |
+| `.github/workflows/android-ci.yml` | `android/**`, `shared/**`, `.github/workflows/android-ci.yml` | **Full:** checkout → JDK 17 (Temurin) → Gradle 8.10.2 (wrapper) → `detekt` → `testDebugUnitTest` → `assembleDebug` → JUnit XML annotations → APK artifact upload (7-day retention). | 1-6-cicd-per-stack | 1-6d-android-ci-flesh-out (adds Compose UI tests + Roborazzi screenshot diff + `assembleRelease` with signing-config) |
+| `.github/workflows/ios-ci.yml` | `ios/**`, `shared/**`, `.github/workflows/ios-ci.yml` | **Stub.** Single `echo` step on `ubuntu-latest` (runner will flip to `macos-latest` in 1.6b when `xcodebuild` lands). Exits 0 to keep PRs unblocked. | 1-6-cicd-per-stack | 1-6b-ios-ci-flesh-out (sequenced after Story 1.2 lands the Xcode project on Mac) |
+| `.github/workflows/infra-ci.yml` | `infra/**`, `.github/workflows/infra-ci.yml` | **Stub.** Single `echo` step on `ubuntu-latest`. Exits 0 to keep PRs unblocked. | 1-6-cicd-per-stack | 1-6c-infra-ci-flesh-out (sequenced after Story 1.3 lands the Oracle VM + `infra/` directory) |
 
-Path filters are intentional: an Android-only PR will not trigger iOS or infra workflows, and vice-versa. This keeps the GitHub Actions free-tier minute budget lean and isolates failure surfaces per stack.
+Path filters are intentional: an Android-only PR will not trigger iOS or infra workflows, and vice-versa. This keeps the GitHub Actions free-tier minute budget lean and isolates failure surfaces per stack. Each workflow's own YAML path is also included so edits to the workflow itself trigger the workflow on the PR that introduces them (self-validation).
 
 ---
 
@@ -50,16 +50,17 @@ If `./gradlew :app:detekt` fails locally but passes on CI (or vice-versa), check
 
 ---
 
-## 4. Why `assembleDebug`, not `assembleRelease`?
+## 4. Scope cuts vs. architecture spec — what 1.6 deferred to 1.6d
 
-The architecture spec ([§"CI/CD Per Stack"](../../_bmad-output/planning-artifacts/architecture.md#cicd-per-stack)) prescribes `assembleRelease` for the Android workflow. Story 1.6 scopes this **down to `assembleDebug`** for the following reason:
+The architecture spec ([§"CI/CD Per Stack"](../../_bmad-output/planning-artifacts/architecture.md#cicd-per-stack)) prescribes a longer Android CI chain than Story 1.6 implemented. Three steps are deferred to follow-up **Story 1.6d** so they can land together with the signing-config work:
 
-- `assembleRelease` requires a signing configuration (keystore + alias + key + store passwords) that this story does not yet provision.
-- Provisioning a release signing config involves: (a) generating a keystore, (b) storing the keystore + passwords as GitHub Actions secrets, (c) wiring `android/app/build.gradle.kts` to read the secrets at build time, (d) deciding upload-keystore-vs-app-signing-by-Google-Play strategy.
-- That's a non-trivial story on its own and is **explicitly deferred** to follow-up Story 1.6d (or rolled into the first store-upload story, TBD).
-- Until then, `assembleDebug` produces a valid APK artifact that is sideloadable on a dev device — sufficient for Epic 1's pairing-and-call validation flow, which doesn't depend on a release build.
+| Step | Spec wants | 1.6 ships | Why deferred to 1.6d |
+|---|---|---|---|
+| **APK target** | `assembleRelease` | `assembleDebug` | Release builds need a signing config (keystore + GitHub Actions secrets + `build.gradle.kts` wiring). Non-trivial — deserves its own story alongside store-upload prep. `assembleDebug` is sideloadable on dev devices, which covers Epic 1's pairing-and-call validation flow. |
+| **Compose UI tests** | `./gradlew :app:connectedDebugAndroidTest` | Not implemented | No Compose UI tests are written yet — they'll arrive with the stories that introduce real UI (pairing screen onward, Epic 1 stories 1.9+). Wiring the gradle task before the tests exist would just slow CI for zero signal. |
+| **Roborazzi screenshot diff** | `./gradlew :app:verifyRoborazziDebug` | Not implemented | Roborazzi needs reference images committed to source control. Establishing those baselines is its own decision (which Compose preview surfaces to baseline, on which Android API level). Belongs in 1.6d with the UI tests it depends on. |
 
-This scope-cut is consistent with the [solo-dev scope-cuts pattern](./solo-dev-scope-cuts.md).
+This scope-cut is consistent with the [solo-dev scope-cuts pattern](./solo-dev-scope-cuts.md) — defer infrastructure that has no current production code to exercise it. Story 1.6d will close the architecture-spec gap when the prerequisite work (UI components, signing config, Roborazzi baselines) is ready.
 
 ---
 
@@ -105,7 +106,18 @@ If a run fails on CI but passes locally with the same commit, suspect:
 
 ---
 
-## 7. References
+## 7. Known trade-offs (current scope)
+
+These are deliberate posture choices made by Story 1.6 + its CR. They are not bugs and they are not on a near-term roadmap to change — they're noted here so a future contributor doesn't have to re-derive the reasoning.
+
+- **No fork-PR guard on `android-ci.yml`.** The job grants `checks: write` + `pull-requests: write` permissions, which would also flow to PRs opened from forks (GitHub withholds repo secrets from fork PRs, but workflow-permissions still apply). `TranslatorRep` is a solo-dev repo on `slepingdragon` with no fork PRs expected. **If the repo opens to outside contributors,** add `if: github.event.pull_request.head.repo.full_name == github.repository` to the `android-ci` job to skip fork PRs (or migrate to the `pull_request_target` pattern with a manual approval gate).
+- **Third-party action `mikepenz/action-junit-report` SHA-pinned; first-party `actions/*` + `gradle/*` pinned to major.** First-party GitHub-org actions have stronger supply-chain guarantees; the SHA-pin discipline is concentrated where the risk is. If a major bump is needed (`v4` → `v5`), update the SHA + the `# v4` annotation deliberately.
+- **`--no-daemon` on every Gradle invocation.** CI runners are ephemeral — the Gradle build daemon (which is in-process JVM reuse across tasks within a job) saves nothing across jobs/PRs. The `gradle/actions/setup-gradle@v4` action handles cache persistence at the Gradle-home level, not at the daemon level. `--no-daemon` is the standard CI convention.
+- **`workflow_dispatch: {}` on all three workflows.** Lets you manually fire a run from the GitHub UI without a PR. Useful for debugging or for re-running the iOS/infra stubs as a sanity check.
+
+---
+
+## 8. References
 
 - [architecture.md §"CI/CD Per Stack"](../../_bmad-output/planning-artifacts/architecture.md#cicd-per-stack) — table of all three workflows + scope.
 - [architecture.md §"Repo Shape — Monorepo, Per-Stack Roots"](../../_bmad-output/planning-artifacts/architecture.md#repo-shape--monorepo-per-stack-roots) — confirms `.github/workflows/` lives at repo root.

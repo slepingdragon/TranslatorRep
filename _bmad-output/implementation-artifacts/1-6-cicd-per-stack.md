@@ -19,7 +19,7 @@ so that regressions in the Android stack are caught before merge — and so the 
 1. **AC-1 (Android CI workflow exists, path-filtered):** `.github/workflows/android-ci.yml` exists, triggered on `pull_request` and `push` to `main`, filtered to `android/**` and `shared/**` (per architecture §"CI/CD Per Stack").
 2. **AC-2 (Android CI runs detekt):** the workflow runs `./gradlew :app:detekt` and fails if any issues are reported. The existing detekt config (`android/detekt-config.yml`) is the source of truth — the workflow does not re-define rules.
 3. **AC-3 (Android CI runs unit tests):** the workflow runs `./gradlew :app:testDebugUnitTest` and fails on any test failure. Story 1.5's 7 unit tests must pass on the CI runner.
-4. **AC-4 (Android CI assembles a debug APK as a workflow artifact):** the workflow runs `./gradlew :app:assembleDebug` and uploads the resulting APK as a workflow artifact (retention 7 days). The architecture spec asks for `assembleRelease` — scoped DOWN to `assembleDebug` because `release` requires a signing config that this story does not yet land (signing-config provisioning is deferred per `docs/runbooks/solo-dev-scope-cuts.md` if that document covers it, or to a follow-up story 1.6d otherwise).
+4. **AC-4 (Android CI assembles a debug APK as a workflow artifact):** the workflow runs `./gradlew :app:assembleDebug` and uploads the resulting APK as a workflow artifact (retention 7 days). The architecture spec asks for `assembleRelease` — scoped DOWN to `assembleDebug` because `release` requires a signing config that this story does not yet land. **Per CR (2026-05-23):** architecture row 1 also prescribes `Compose UI tests` and `Roborazzi screenshot diff` between `unit tests` and the assemble step; both are deferred to follow-up Story 1.6d for the same reason (no Compose UI tests written yet; Roborazzi needs reference-image baselines). All three deferrals (signing-config, Compose UI tests, Roborazzi) bundle into **Story 1.6d** — see [`docs/runbooks/ci-stack-overview.md` §4](../../docs/runbooks/ci-stack-overview.md#4-scope-cuts-vs-architecture-spec--what-16-deferred-to-16d) for the full deferred-step table.
 5. **AC-5 (CI catches a deliberately-broken commit):** a deliberately-broken Android commit (e.g., adding `import android.util.Log` to `MainActivity.kt`) confirms the workflow fails the build. Documented in the dev notes; the verification commit is reverted before this story closes.
 6. **AC-6 (Workflow fits within GitHub Actions free-tier minute budget at solo-dev volume):** the Android workflow's first-run wall-clock time is recorded in dev notes; warm runs (with Gradle cache) should complete in < 10 minutes. (2,000 minutes/month free tier — solo-dev PR volume is < 30/month, so headroom is ample even at 10 min/run.)
 7. **AC-7 (iOS CI workflow stubbed, NOT executed until Story 1.2 unblocks):** `.github/workflows/ios-ci.yml` exists with the trigger filter (`ios/**` or `shared/**`) and a single job whose step is `echo "iOS CI deferred to Story 1.6b once Story 1.2 lands Xcode project"`. Story 1.2's close-out adds the real SwiftLint + xcodebuild test + snapshot-test + Ad-Hoc-archive steps. Keeps the path-filter contract present in the repo so a future iOS PR doesn't accidentally trigger no workflow.
@@ -78,7 +78,7 @@ so that regressions in the Android stack are caught before merge — and so the 
   - [x] 9.5 Section "Deferred work — what 1.6b and 1.6c need to land" — `[ ]` checklists mirroring the stub-file comments, with action-pin recommendations.
   - [x] 9.6 (bonus) Section "Debugging a failing CI run" — diagnosis order + JDK-drift / Gradle-cache pitfalls drawn from the actual incidents caught in this story.
 - [x] **Task 10: Update sprint-status.yaml + this story file** (post-implementation)
-  - [x] 10.1 Sprint-status updated: `1-6-cicd-per-stack: review`. The `1-6b-ios-ci-flesh-out: backlog` and `1-6c-infra-ci-flesh-out: backlog` entries were already present in sprint-status.yaml as of story creation — no additions needed.
+  - [x] 10.1 Sprint-status updated: `1-6-cicd-per-stack: review` (→ `done` post-CR). The `1-6b-ios-ci-flesh-out: backlog` and `1-6c-infra-ci-flesh-out: backlog` entries were added in the same commit (`87bb929`) that created this story file on local `main`; they appear as new lines in PR #3's diff vs `origin/main` because `origin/main` was 3 commits behind local `main` at PR time, not because this Task 10.1 added them de novo. CR (2026-05-23) added a third follow-up entry: `1-6d-android-ci-flesh-out: backlog` for the Compose UI tests + Roborazzi + signing-config / `assembleRelease` work.
 - [x] **Task 11: Run code-review (CR) checklist for canonical-name + path-filter compliance** (architecture §16 "Code-review agent checks")
   - [x] 11.1 Forbidden-synonyms scan against all 3 workflow YAML files + the runbook prose: **zero matches** for any term in canonical-names.md §1 (Pair, Call, CallSession, Utterance, Caption, etc.). Workflow files are pure infrastructure config — no domain language appears.
   - [x] 11.2 Path filters verified exact against architecture spec: `android-ci.yml` = `android/**` + `shared/**`; `ios-ci.yml` = `ios/**` + `shared/**`; `infra-ci.yml` = `infra/**` (no `shared/**`). Verified twice — once locally pre-push, once empirically (smoke PRs that touched android/** triggered android-ci as expected; ios-ci stub triggered too on the smoke PRs because new workflow files always run once on the PR that introduces them — GitHub's default behavior. After merge to main, the path-filter contract will hold cleanly).
@@ -359,18 +359,20 @@ Both well under AC-6 thresholds (<10min warm, <15min cold). The first full clean
 
 ### File List
 
-**Created:**
+**Created (initial impl + CR patch round):**
 
-- `.github/workflows/android-ci.yml` (60 lines)
-- `.github/workflows/ios-ci.yml` (34 lines)
-- `.github/workflows/infra-ci.yml` (29 lines)
-- `docs/runbooks/ci-stack-overview.md` (120 lines)
+- `.github/workflows/android-ci.yml` (95 lines after CR patches: concurrency + self-trigger path + chmod step + setup-gradle hardening + SHA-pinned junit-report + junit-report require_tests/fail_on_failure + artifact run_attempt + if-no-files-found error)
+- `.github/workflows/ios-ci.yml` (47 lines after CR patches: concurrency + self-trigger path + runs-on flipped to ubuntu-latest with TODO + explicit permissions)
+- `.github/workflows/infra-ci.yml` (39 lines after CR patches: concurrency + self-trigger path + explicit permissions)
+- `docs/runbooks/ci-stack-overview.md` (~145 lines after CR patches: §1 table reflects new runners + path filters + 1-6d follow-up; §4 expanded to a deferred-step table covering signing-config + Compose UI tests + Roborazzi; new §7 "Known trade-offs" documents fork-PR posture + SHA-pin discipline + `--no-daemon` rationale; old §7 References renumbered to §8)
+- `.gitattributes` (14 lines, CR patch): scoped LF/CRLF rules for `android/gradlew` + `android/gradlew.bat` to keep the wrapper executable on Linux CI runners even after Windows commits.
 
 **Modified:**
 
 - `android/gradlew` (mode 100644 → 100755 in git index; no content change)
-- `_bmad-output/implementation-artifacts/sprint-status.yaml` (1-6-cicd-per-stack: ready-for-dev → in-progress → review; last_updated bumped)
-- `_bmad-output/implementation-artifacts/1-6-cicd-per-stack.md` (this story; Status field flipped + Tasks marked [x] + Dev Agent Record filled)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (1-6-cicd-per-stack: ready-for-dev → in-progress → review → done; `1-6d-android-ci-flesh-out: backlog` added; last_updated bumped)
+- `_bmad-output/implementation-artifacts/1-6-cicd-per-stack.md` (this story; Status flipped + Tasks marked [x] + Dev Agent Record filled + Review Findings section appended)
+- `_bmad-output/implementation-artifacts/deferred-work.md` (new file created by CR — recorded 16 defer items for future cleanup)
 
 **Throwaway (smoke-test only; closed PRs, deleted branches, never landed on main):**
 
@@ -381,3 +383,35 @@ Both well under AC-6 thresholds (<10min warm, <15min cold). The first full clean
 
 - 2026-05-23 — Story 1.6 created (status `ready-for-dev`). Scope: Android CI workflow + iOS/infra stubs. iOS + infra full implementations split into follow-up stories 1-6b and 1-6c sequenced after Story 1.2 and Story 1.3 respectively.
 - 2026-05-23 — Story 1.6 implementation complete (status `review`). All 11 tasks ✅. AC-1 through AC-9 satisfied. Two CI bugs surfaced by the smoke-test cycle and fixed in feature commits (`2857d3a` gradlew exec bit; `79d32f7` JUnit-report permissions). Smoke-test cycle: 2 throwaway PRs (#1, #2) closed without merge; both branches deleted. Cold-cache 85s + warm-cache 2m26s — both well under AC-6 thresholds. Ready for code review (CR).
+
+### Review Findings
+
+`bmad-code-review` run on PR #3 (`feature/1-6-cicd-per-stack` → `main`) at 2026-05-23. Diff scope = full PR-#3 bundle (Story 1.5 + Story 1.6, since `origin/main` was 3 commits behind local `main` at PR time). All 3 adversarial layers ran with Opus 4.7 capability: Blind Hunter (diff-only, 20 findings), Edge Case Hunter (diff + project read, 30 JSON findings), Acceptance Auditor (diff + 1-5 + 1-6 specs + architecture + canonical-names, 13 findings). Triaged: 3 decision-needed, 11 patch, 16 defer (Story 1.5 follow-ups → `deferred-work.md`), 10 dismissed.
+
+**Decision-needed (3 items — RESOLVED 2026-05-23):**
+
+- [x] [Review][Decision] **Architecture-prescribed Compose UI tests + Roborazzi screenshot diff silently dropped from `android-ci.yml`.** → **RESOLVED: defer to follow-up Story 1.6d** alongside release-signing config. Document the scope cut in runbook §4 + Story 1.6 file now so the gap is visible. Adds 2 new patches: (a) add `1-6d-android-ci-flesh-out: backlog` to sprint-status.yaml, (b) extend runbook §4 + Story 1.6 AC-4 prose to acknowledge the Compose UI tests + Roborazzi scope cut.
+- [x] [Review][Decision] **iOS stub runs on `macos-latest` (10× billing) for echo + exit 0.** → **RESOLVED: switch to `ubuntu-latest` now**, with TODO comment that Story 1.6b will flip it back when xcodebuild lands. Converts to a code patch in ios-ci.yml.
+- [x] [Review][Decision] **Forked-PR token elevation posture.** → **RESOLVED: accept current posture** (solo-dev repo on slepingdragon, no forks expected). Document the assumption in runbook §6 (Debugging) or a new "Known trade-offs" section as a future-fork follow-up trigger. Converts to a doc-only patch.
+
+**Patch (11 items — RESOLVED 2026-05-23 via CR patch round, all applied):**
+
+- [x] [Review][Patch] `upload-artifact` `if-no-files-found: error` added. [.github/workflows/android-ci.yml]
+- [x] [Review][Patch] `mikepenz/action-junit-report` `require_tests: true` + `fail_on_failure: true` added. [.github/workflows/android-ci.yml]
+- [x] [Review][Patch] Concurrency control added on all 3 workflows. [.github/workflows/{android,ios,infra}-ci.yml]
+- [x] [Review][Patch] Artifact name now includes `${{ github.run_attempt }}` for re-run uniqueness. [.github/workflows/android-ci.yml]
+- [x] [Review][Patch] Workflow self-trigger path filter added (each workflow now triggers on its own YAML changes). [.github/workflows/{android,ios,infra}-ci.yml]
+- [x] [Review][Patch] `cache-read-only: ${{ github.ref != 'refs/heads/main' }}` added to setup-gradle. [.github/workflows/android-ci.yml]
+- [x] [Review][Patch] `.gitattributes` created with scoped `android/gradlew text eol=lf` + `android/gradlew.bat text eol=crlf` rules; CI workflow also runs `chmod +x ./gradlew` as belt-and-suspenders. [.gitattributes + .github/workflows/android-ci.yml ensure-gradlew-executable step]
+- [x] [Review][Patch] `mikepenz/action-junit-report` SHA-pinned to `db71d41eb79864e25ab0337e395c352e84523afe` (v4 floating-tag target as of 2026-05-23). [.github/workflows/android-ci.yml]
+- [x] [Review][Patch] `validate-wrappers: true` added to setup-gradle. [.github/workflows/android-ci.yml]
+- [x] [Review][Patch] DAR Task 10.1 + Completion Notes "1-6b/1-6c entries" wording clarified — entries appeared in PR diff vs origin/main because origin/main was 3 commits behind, not because Task 10.1 added them de novo. [this file → Task 10.1]
+- [x] [Review][Patch] DAR File List line counts refreshed to post-patch-round actual counts (android-ci.yml: 95, ios-ci.yml: 47, infra-ci.yml: 39, ci-stack-overview.md: ~145, .gitattributes: 14). [this file → File List]
+
+**Deferred (16 items — Story 1.5 follow-ups + theoretical edge cases; full list in [deferred-work.md](./deferred-work.md)):**
+
+- [x] [Review][Defer] All 16 defer items are Story 1.5 work or low-risk theoretical edge cases (Kotlin `runCatching` over-catch, iOS `precondition` traps, SwiftLint regex breadth, ULID clock-rewind flake, encodeCanonical boundary tests, etc.) — recorded in `deferred-work.md` for future-iOS / future-1.5-touch-up consideration. None block Story 1.6 merge.
+
+**Dismissed (10 items — false positives + scope misunderstandings):**
+
+Briefly: infra-CI-stub-no-value (intentional debt visibility); APK-not-validated-as-installable (out of AC-4 scope); `--no-daemon`-defeats-cache (misunderstanding — daemon ≠ setup-gradle cache); Story-1.5-test-vector-"inconsistency" (diff is fixing wrong→right, not introducing); explicit-`exit 0` (defensible); sprint-status-no-timezone (file-pattern consistent); runbook-cross-link existence (verified — file exists); `cd android` non-idempotent (trivial); Story-1.5-SwiftLint-broadening (acknowledged in 1.5 fix log); Crashlytics gate hand-waving (Story 1.5 deliberate).
