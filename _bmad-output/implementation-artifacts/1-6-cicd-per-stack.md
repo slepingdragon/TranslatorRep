@@ -1,6 +1,6 @@
 # Story 1.6: CI/CD Per Stack
 
-Status: review
+Status: done
 
 <!-- Created 2026-05-23 by bmad-create-story workflow (run inline). Validation optional; run bmad-create-story:validate before bmad-dev-story if desired. -->
 
@@ -383,6 +383,7 @@ Both well under AC-6 thresholds (<10min warm, <15min cold). The first full clean
 
 - 2026-05-23 — Story 1.6 created (status `ready-for-dev`). Scope: Android CI workflow + iOS/infra stubs. iOS + infra full implementations split into follow-up stories 1-6b and 1-6c sequenced after Story 1.2 and Story 1.3 respectively.
 - 2026-05-23 — Story 1.6 implementation complete (status `review`). All 11 tasks ✅. AC-1 through AC-9 satisfied. Two CI bugs surfaced by the smoke-test cycle and fixed in feature commits (`2857d3a` gradlew exec bit; `79d32f7` JUnit-report permissions). Smoke-test cycle: 2 throwaway PRs (#1, #2) closed without merge; both branches deleted. Cold-cache 85s + warm-cache 2m26s — both well under AC-6 thresholds. Ready for code review (CR).
+- 2026-05-23 — `bmad-code-review` ran on PR #3. 3 adversarial layers (Blind Hunter, Edge Case Hunter, Acceptance Auditor, all Opus 4.7). 60 raw findings → triaged to 3 decision-needed + 11 patch + 16 defer (→ `deferred-work.md`) + 10 dismissed. All 3 decisions resolved (Compose UI + Roborazzi → defer to new Story 1.6d; iOS stub runner → ubuntu-latest with TODO; fork-PR posture → accept + document). All 15 patches (11 original + 4 from decision resolutions) applied in commit `90a2d1d`. Full canonical CI chain green in 3m 58s (run `26338331807`): detekt 1m13s + unit-tests 1m14s + **assemble-debug 1m18s + upload-debug-apk 4s** — first end-to-end run hitting the artifact-upload step. Status → `done`.
 
 ### Review Findings
 

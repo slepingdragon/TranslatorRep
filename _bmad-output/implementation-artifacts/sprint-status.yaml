@@ -37,7 +37,7 @@
 # docs/runbooks/ios-setup-on-mac.md for the iOS handoff.
 
 generated: 2026-05-23
-last_updated: 2026-05-23T18:30  # Story 1.6 CR patches landed — workflow hardening + 1-6d follow-up added
+last_updated: 2026-05-23T18:55  # Story 1.6 → done — CR-patches CI green (3m58s full chain), all 9 ACs satisfied + workflow hardened
 project: TranslatorRep
 project_key: NOKEY
 tracking_system: file-system
@@ -51,7 +51,7 @@ development_status:
   1-3-oracle-vm-livekit-docker-compose-stack-domain: backlog
   1-4-firebase-init-firestore-rules-baseline-app-check-providers: backlog
   1-5-safelog-lint-ulid: done
-  1-6-cicd-per-stack: review            # Android CI live; iOS + infra deferred to 1-6b/1-6c
+  1-6-cicd-per-stack: done              # Android CI live + CR patches landed; iOS + infra + Compose UI/Roborazzi/release deferred to 1-6b/1-6c/1-6d
   1-6b-ios-ci-flesh-out: backlog        # Sequenced after Story 1.2 (Xcode project on Mac)
   1-6c-infra-ci-flesh-out: backlog      # Sequenced after Story 1.3 (Oracle VM + infra/ dir)
   1-6d-android-ci-flesh-out: backlog    # Adds Compose UI tests + Roborazzi + assembleRelease+signing-config (added by 1.6 CR 2026-05-23)
