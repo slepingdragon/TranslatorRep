@@ -2,8 +2,13 @@ package com.xaeryx.translatorrep.pairing
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.SetOptions
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import java.util.Date
 
@@ -78,7 +83,7 @@ interface PairStore {
  */
 class PairingFirestoreRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
-) : CodeStore, PairStore {
+) : CodeStore, PairStore, PairDirectory {
 
     private val codes get() = firestore.collection(COLLECTION_CODES)
     private val pairs get() = firestore.collection(COLLECTION_PAIRS)
@@ -126,6 +131,34 @@ class PairingFirestoreRepository(
 
     override suspend fun setUserPairId(uid: String, pairId: String) {
         users.document(uid).set(mapOf(FIELD_PAIR_ID to pairId), SetOptions.merge()).await()
+    }
+
+    // ── PairDirectory (Story 1.11) ──────────────────────────────────────────
+
+    private fun membershipQuery(myUid: String) =
+        pairs.where(Filter.or(Filter.equalTo(FIELD_MEMBER_A, myUid), Filter.equalTo(FIELD_MEMBER_B, myUid)))
+            .limit(1)
+
+    override fun observePairFor(myUid: String): Flow<RemotePair?> = callbackFlow {
+        val registration = membershipQuery(myUid).addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                // Transient (e.g. offline) — keep the last emitted value; don't close the flow.
+                return@addSnapshotListener
+            }
+            trySend(snapshot?.documents?.firstOrNull()?.toRemotePair())
+        }
+        awaitClose { registration.remove() }
+    }
+
+    override suspend fun findPairFor(myUid: String): RemotePair? =
+        membershipQuery(myUid).get().await().documents.firstOrNull()?.toRemotePair()
+
+    override suspend fun ensureOwnPairId(myUid: String, pairId: String) = setUserPairId(myUid, pairId)
+
+    private fun DocumentSnapshot.toRemotePair(): RemotePair? {
+        val a = getString(FIELD_MEMBER_A) ?: return null
+        val b = getString(FIELD_MEMBER_B) ?: return null
+        return RemotePair(pairId = id, memberA = a, memberB = b)
     }
 
     private companion object {

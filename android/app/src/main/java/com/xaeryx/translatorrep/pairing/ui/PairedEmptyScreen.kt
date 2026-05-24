@@ -17,7 +17,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -42,14 +41,14 @@ private const val PAIRING_CODE_LENGTH = 6
  * interactive partner-code input is foregrounded at the top (the active task), with the user's
  * own code displayed below the divider (the passive artifact the partner needs).
  *
- * Stateful entry point: collects the ViewModel's three flows, owns the clipboard write +
- * "Code copied" snackbar, and — when pairing succeeds — invokes [onPaired] so the host
- * navigates to the Paired home.
+ * Stateful entry point: collects the ViewModel's three flows and owns the clipboard write +
+ * "Code copied" snackbar. The post-pair navigation is NOT handled here — creating `/pairs`
+ * flips the app-wide [com.xaeryx.translatorrep.pairing.PairingStatusRepository], which
+ * re-routes MainActivity to the Paired home (Story 1.11).
  */
 @Composable
 fun PairedEmptyScreen(
     viewModel: PairingViewModel,
-    onPaired: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val codeState by viewModel.codeState.collectAsStateWithLifecycle()
@@ -58,10 +57,6 @@ fun PairedEmptyScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val clipboard = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
-
-    LaunchedEffect(inputState) {
-        (inputState as? PairingInputUiState.Paired)?.let { onPaired(it.pairId) }
-    }
 
     PairedEmptyContent(
         codeState = codeState,

@@ -16,11 +16,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -35,6 +33,7 @@ import com.xaeryx.translatorrep.pairing.PairingCodeAllocator
 import com.xaeryx.translatorrep.pairing.PairingCodeGenerator
 import com.xaeryx.translatorrep.pairing.PairingCoordinator
 import com.xaeryx.translatorrep.pairing.PairingFirestoreRepository
+import com.xaeryx.translatorrep.pairing.PairingStatus
 import com.xaeryx.translatorrep.pairing.PairingViewModel
 import com.xaeryx.translatorrep.pairing.ui.PairedEmptyScreen
 import com.xaeryx.translatorrep.ui.components.GlassIntensity
@@ -76,19 +75,22 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background,
                 ) {
                     when (val state = authRepository.state.collectAsStateWithLifecycle().value) {
-                        // Story 1.9/1.10: once signed in, show the Paired-Empty home; on a
-                        // successful pair, transition to the Paired home. In-session only —
-                        // restart-persistence (reading /users/{uid}.pairId) is Story 1.11.
+                        // Story 1.11: once signed in, route on persistent pairing status —
+                        // Paired (mirror/listener) → Paired home; Unpaired → Paired-Empty
+                        // home; Unknown → brief loading on cold launch. The /pairs listener
+                        // also drives the immediate post-pair transition (Story 1.10).
                         is AuthState.SignedIn -> {
-                            var pairId by rememberSaveable { mutableStateOf<String?>(null) }
-                            val current = pairId
-                            if (current == null) {
-                                PairedEmptyRoute(
-                                    ownerUid = state.uid,
-                                    onPaired = { pairId = it },
-                                )
-                            } else {
-                                PairedHomePlaceholder()
+                            val pairingRepository =
+                                (application as TranslatorRepApplication).pairingStatusRepository
+                            LaunchedEffect(state.uid) { pairingRepository.start(state.uid) }
+                            when (
+                                val pairing =
+                                    pairingRepository.status.collectAsStateWithLifecycle().value
+                            ) {
+                                PairingStatus.Unknown -> PairingLoadingGate()
+                                PairingStatus.Unpaired -> PairedEmptyRoute(ownerUid = state.uid)
+                                is PairingStatus.Paired ->
+                                    PairedHomePlaceholder(partnerName = pairing.partnerName)
                             }
                         }
                         else -> AuthGateScreen(
@@ -129,7 +131,7 @@ class MainActivity : ComponentActivity() {
  * framework) — consistent with [TranslatorRepApplication.authRepository].
  */
 @Composable
-private fun PairedEmptyRoute(ownerUid: String, onPaired: (String) -> Unit) {
+private fun PairedEmptyRoute(ownerUid: String) {
     val pairingViewModel: PairingViewModel = viewModel(
         factory = remember(ownerUid) {
             // One repository instance serves both seams (CodeStore + PairStore).
@@ -144,16 +146,29 @@ private fun PairedEmptyRoute(ownerUid: String, onPaired: (String) -> Unit) {
             )
         },
     )
-    PairedEmptyScreen(viewModel = pairingViewModel, onPaired = onPaired)
+    // No explicit onPaired navigation: creating /pairs makes the app-wide
+    // PairingStatusRepository listener fire (Firestore echoes the local write), flipping
+    // status to Paired, which re-routes MainActivity to PairedHomePlaceholder.
+    PairedEmptyScreen(viewModel = pairingViewModel)
+}
+
+/** Brief loading gate while pairing status resolves on cold launch (Story 1.11). */
+@Composable
+private fun PairingLoadingGate() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        CircularProgressIndicator(color = TextPrimary)
+    }
 }
 
 /**
- * Minimal Paired-home placeholder shown after a successful pair (Story 1.10). The real Paired
- * home — partner display name + the audio/video Call button — is Story 2.2; restart-persistent
- * routing into it (reading `/users/{uid}.pairId` + the Room mirror) is Story 1.11.
+ * Minimal Paired-home placeholder (Stories 1.10/1.11). The real Paired home — partner display
+ * name styling + the audio/video Call button — is Story 2.2.
  */
 @Composable
-private fun PairedHomePlaceholder() {
+private fun PairedHomePlaceholder(partnerName: String) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
@@ -168,7 +183,7 @@ private fun PairedHomePlaceholder() {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
-                    text = "You're paired!",
+                    text = "Paired with $partnerName",
                     style = MaterialTheme.typography.titleLarge,
                     color = TextPrimary,
                 )
