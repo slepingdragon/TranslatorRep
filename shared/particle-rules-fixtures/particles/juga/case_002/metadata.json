@@ -1,10 +1,10 @@
 {
   "source_lang": "id-ID",
   "target_lang": "en-US",
-  "expected_particles": ["juga"],
+  "expected_particles": ["juga", "dia"],
   "expected_render_mode": "default",
   "expected_translation_status": "ok",
   "tags": ["TQ-1", "TQ-3", "mid-sentence-also", "additive-statement", "gender-neutral-dia"],
   "dr_section_ref": "DR §1 (juga) + DR §6.3 (gender-neutral dia)",
-  "notes": "Mid-sentence juga between subject and verb ('dia juga datang' = 'they also came'). English rephrases to 'They came too' to match the rule equivalent ' too' appended at sentence end (rather than 'They also came' which would be more natural English but break idempotency). LIMITATION ACKNOWLEDGED: when NMT preserves the marker, the substitution happens at the marker's position; when NMT drops it, the inject is sentence-final. This is documented in the rule's design notes. VERIFY WITH GIRLFRIEND: 'They came too' is the safer rendering for this rule; 'They also came' would be more natural but mid-sentence inject is harder."
+  "notes": "Two-rule fixture: (1) TQ-1 mid-sentence juga between subject and verb ('dia juga datang' = 'they also came'); (2) TQ-3 gender-neutral 'dia → they'. Expected_target 'They came too' (rather than 'They also came') keeps the rule's sentence-final inject idempotent — when NMT preserves the marker, substitution happens at the marker's position; when NMT drops it, the inject is sentence-final. VERIFY WITH GIRLFRIEND: 'They came too' is the safer rendering for this rule; 'They also came' would be more natural but mid-sentence inject is harder."
 }

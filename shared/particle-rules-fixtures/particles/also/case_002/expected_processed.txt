@@ -1,1 +1,1 @@
-Dia [PARTICLE:also] datang
+[PARTICLE:dia] [PARTICLE:also] datang

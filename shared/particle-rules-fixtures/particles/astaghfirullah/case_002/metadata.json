@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["astaghfirullah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-6", "religious-expression", "verbatim-preservation", "arabic-origin", "self-frustration"],
+  "dr_section_ref": "architecture §11 + DR §6 (religious expressions preserved verbatim)",
+  "notes": "Casual self-frustration. 'lupa lagi' = 'forgot again' — typical 'ugh, I forgot' moment. VERIFY WITH GIRLFRIEND: this is the casual-use end of the astaghfirullah spectrum — confirm whether you'd say it for forgetting where you put your keys vs. only for more meaningful lapses."
+}

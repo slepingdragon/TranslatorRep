@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["dia"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-3", "gender-neutral-pronoun", "singular-they-default", "subject-position", "preference-statement"],
+  "dr_section_ref": "architecture §11 + DR §6.3 (gender-neutral dia → they)",
+  "notes": "Subject-position 'dia' in a simple preference statement → 'They like coffee'. Sibling to case_001 but with a stative verb instead of motion. VERIFY WITH GIRLFRIEND: confirms the singular-they default reads naturally for habits/preferences (a common conversational context). The rule's inject is a no-op here because expected_target already contains 'They' (capitalized) and conservative inject only replaces 'he/she/He/She' when neither lowercase 'they' nor a gendered pronoun is present — case_003 just exercises preProcess marker tagging."
+}

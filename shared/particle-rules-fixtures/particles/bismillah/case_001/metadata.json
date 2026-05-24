@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["bismillah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-6", "religious-expression", "verbatim-preservation", "arabic-origin", "invocation-before-action"],
+  "dr_section_ref": "architecture §11 + DR §6 (religious expressions preserved verbatim)",
+  "notes": "'bismillah' = 'in the name of God', invocation before starting an activity (eating, traveling, working). Verbatim preservation avoids the heavy literal 'in the name of God' which sounds liturgical in English. Long-form variant 'bismillahirrahmanirrahim' deferred. VERIFY WITH GIRLFRIEND: whether you and partner use 'bismillah' or just 'OK let's go' / 'here goes' for activity kick-off; this may be a religiously-marked expression that doesn't appear in everyday non-prayer contexts."
+}

@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["masyaallah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-6", "religious-expression", "verbatim-preservation", "arabic-origin", "intelligence-praise"],
+  "dr_section_ref": "architecture §11 + DR §6 (religious expressions preserved verbatim)",
+  "notes": "'pinternya' = 'pinter' (smart) + '-nya' (intensifier suffix, 'how X!'). Praise for someone's intelligence — quintessential masyaallah context. VERIFY WITH GIRLFRIEND: whether 'so smart' captures the appropriate level of warmth/intensity for this construction."
+}

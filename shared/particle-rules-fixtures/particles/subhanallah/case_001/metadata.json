@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["subhanallah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-6", "religious-expression", "verbatim-preservation", "arabic-origin", "awe-at-nature"],
+  "dr_section_ref": "architecture §11 + DR §6 (religious expressions preserved verbatim)",
+  "notes": "'subhanallah' = 'glory be to God', expresses awe. Common when admiring natural beauty (scenery, weather). Literal 'glory be to God' would shift register too far toward religious-formal. Variant 'subhan'allah' (apostrophe) deferred. VERIFY WITH GIRLFRIEND: whether subhanallah is used outside explicitly religious contexts in your conversational register, or whether 'wow' / 'gorgeous' would be more natural for everyday admiration."
+}

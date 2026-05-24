@@ -3,9 +3,10 @@ package com.xaeryx.translatorrep.translation.particles
 /**
  * Registry of all particle preservation rules for the [ParticleProcessor].
  *
- * **Scope (post Story 3.2b Phase 3):** All 14 TQ-1 Indonesian discourse
- * particles are registered using 4 different helpers, each shaped for a
- * distinct linguistic position pattern:
+ * **Scope (post Story 3.2b Phase 4):** TQ-1 (14 discourse particles) + TQ-3
+ * (gender-neutral `dia → they`) + TQ-6 (6 Arabic-origin religious expressions
+ * preserved verbatim) are registered via 6 distinct helpers, each shaped for
+ * a distinct linguistic position pattern:
  *
  *  - [sentenceFinalParticle] (Phase 1+2): `loh`, `kan`, `sih`, `dong`, `deh`,
  *    `kok`, `ya`, `lah` — discourse particles in sentence-final position with
@@ -21,10 +22,23 @@ package com.xaeryx.translatorrep.translation.particles
  *  - [midSentenceAlso] (Phase 3): `juga`, `also` — "also/too" appended at
  *    sentence end. ("also" registered as an Indonesian-loanword alias for
  *    `juga` with identical semantics; rare in real usage but spec-required.)
+ *  - [genderNeutralPronoun] (Phase 4 — TQ-3): `dia` — standalone third-person
+ *    singular pronoun (gender-unspecified in Indonesian). Target equivalent =
+ *    `"they"` (singular-they default per architecture §11 / DR §6.3). Inject
+ *    replaces a stray `he/she` from the NMT if `"they"` isn't already present.
+ *    **Registered AFTER `mah`** because mah's pronoun list includes `dia`;
+ *    letting mah run first means `dia mah` collapses correctly into both tags.
+ *  - [verbatimReligious] (Phase 4 — TQ-6): `alhamdulillah`, `insyaallah`,
+ *    `bismillah`, `subhanallah`, `astaghfirullah`, `masyaallah` — Arabic-origin
+ *    religious expressions preserved verbatim in target (the English-receiving
+ *    partner is expected to recognize them; literal translations like "thank
+ *    God" would flatten the cultural-pragmatic register per DR §6 / architecture
+ *    §11). Multi-word variants (`insya Allah` / `masya Allah`) deferred — v1
+ *    covers single-word Indonesian spellings only.
  *
- * TQ-3/4/5/6/7/8 categories deferred to Phase 4–5 (slang, Sundanese,
- * honorifics, religious, indirect refusals, gender-neutral defaults).
- * iOS Swift parity is Story 3.2c (Mac/iOS session).
+ * TQ-4/5/7/8 categories deferred to Phase 5 (Sundanese, honorifics, indirect
+ * refusals, slang) — those need Bania's girlfriend's linguistic input for
+ * register decisions + slang currency. iOS Swift parity is Story 3.2c.
  */
 internal object ParticleRules {
 
@@ -77,6 +91,18 @@ internal object ParticleRules {
         // `juga` + `also` (loanword alias): mid-sentence "also/too"
         midSentenceAlso(name = "juga"),
         midSentenceAlso(name = "also"),
+
+        // ── TQ-3 gender-neutral pronoun (Phase 4)
+        // `dia` registered AFTER `mah` so `dia mah` collisions are tagged by mah first.
+        genderNeutralPronoun(name = "dia"),
+
+        // ── TQ-6 religious-expression verbatim preservation (Phase 4)
+        verbatimReligious(name = "alhamdulillah"),
+        verbatimReligious(name = "insyaallah"),
+        verbatimReligious(name = "bismillah"),
+        verbatimReligious(name = "subhanallah"),
+        verbatimReligious(name = "astaghfirullah"),
+        verbatimReligious(name = "masyaallah"),
     )
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -234,6 +260,100 @@ internal object ParticleRules {
                 current.substring(0, trailingPunct.range.first) + equivalent + trailingPunct.value
             } else {
                 current + equivalent
+            }
+        },
+    )
+
+    /**
+     * Helper for Indonesian gender-neutral third-person singular pronoun (`dia`).
+     * Indonesian doesn't distinguish he/she; English singular-they is the most
+     * faithful default per architecture §11 + DR §6.3.
+     *
+     * Detect: standalone `dia` as a whole word (sentence-start OR preceded by
+     * whitespace, followed by whitespace OR sentence-terminal punctuation).
+     * Does NOT match `dianya` (possessive suffix — out of scope for v1) or
+     * any substring inside a larger token like `radia` (won't happen, but
+     * the lookbehind enforces it).
+     *
+     * Inject: Pass 2 fallback for the case where NMT dropped the marker AND
+     * `"they"` isn't already in target — replace the first `he/she/He/She`
+     * with `they/They`. If no gendered pronoun is present (e.g., NMT produced
+     * a noun phrase), inject is a no-op; the rule is still marked preserved
+     * since the source-side intent has been honored by the NMT itself.
+     *
+     * **Why not also handle object/possessive forms (him/her/his/hers):**
+     * Indonesian uses `dia` for subject + object positions and `-nya` clitic
+     * for possessive. Subject is most common in conversation and lowest-risk
+     * to replace blindly. Object + possessive disambiguation is deferred
+     * pending real-conversation evidence from Story 3.1.
+     */
+    private fun genderNeutralPronoun(name: String): ParticleRule = ParticleRule(
+        name = name,
+        sourceLang = "id-ID",
+        detect = { text ->
+            val pattern = """(?<=^|\s)${Regex.escape(name)}(?=[\s,.!?;:]|$)"""
+            Regex(pattern, setOf(RegexOption.IGNORE_CASE))
+                .find(text)
+                ?.let { ParticleMatch(startIndex = it.range.first, endIndex = it.range.last + 1, matched = it.value) }
+        },
+        targetEquivalents = mapOf("en-US" to "they"),
+        inject = { current, equivalent, _ ->
+            val gendered = Regex("""\b(he|she|He|She)\b""")
+            val match = gendered.find(current)
+            if (match != null) {
+                val replacement = if (match.value[0].isUpperCase()) {
+                    equivalent.replaceFirstChar { it.uppercase() }
+                } else {
+                    equivalent
+                }
+                current.replaceRange(match.range, replacement)
+            } else {
+                current
+            }
+        },
+    )
+
+    /**
+     * Helper for verbatim preservation of Arabic-origin religious expressions
+     * (DR §6 / TQ-6). Target equivalent = the same lowercase term — the
+     * English-receiving partner is expected to recognize these; literal
+     * translation ("thank God", "God willing") would flatten the cultural-
+     * pragmatic register.
+     *
+     * Detect: standalone word (start-of-string OR preceded by whitespace OR
+     * preceded by punctuation), followed by whitespace OR sentence-terminal
+     * punctuation. Case-insensitive — both `Alhamdulillah` (sentence-initial)
+     * and `alhamdulillah` (mid-sentence) match.
+     *
+     * Inject: append `, <term>` before trailing terminal punctuation. Used
+     * only when NMT dropped the marker AND didn't already produce the term
+     * (Pass 2 idempotency contains-check is case-sensitive, so capitalized
+     * NMT output like "Alhamdulillah, ..." would trigger inject; that's
+     * acceptable — the appended lowercase form is correct and the test
+     * fixtures use lowercase consistently).
+     *
+     * **Multi-word variants deferred:** `insya Allah`, `masya Allah`, the
+     * Arabic-script forms (إن شاء الله, etc.), and salutation pairs like
+     * `assalamualaikum` / `wa'alaikumsalam` are out of v1 scope. Six common
+     * single-word Indonesian spellings cover the dominant conversational
+     * cases per architecture §11.
+     */
+    private fun verbatimReligious(name: String): ParticleRule = ParticleRule(
+        name = name,
+        sourceLang = "id-ID",
+        detect = { text ->
+            val pattern = """(?<=^|[\s,.!?;:])${Regex.escape(name)}(?=[\s,.!?;:]|$)"""
+            Regex(pattern, setOf(RegexOption.IGNORE_CASE))
+                .find(text)
+                ?.let { ParticleMatch(startIndex = it.range.first, endIndex = it.range.last + 1, matched = it.value) }
+        },
+        targetEquivalents = mapOf("en-US" to name),
+        inject = { current, equivalent, _ ->
+            val trailingPunct = Regex("""[.,!?;:]+\s*$""").find(current)
+            if (trailingPunct != null) {
+                current.substring(0, trailingPunct.range.first) + ", " + equivalent + trailingPunct.value
+            } else {
+                "$current, $equivalent"
             }
         },
     )

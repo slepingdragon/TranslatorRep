@@ -1,1 +1,1 @@
-Dia datang besok [PARTICLE:loh]
+[PARTICLE:dia] datang besok [PARTICLE:loh]

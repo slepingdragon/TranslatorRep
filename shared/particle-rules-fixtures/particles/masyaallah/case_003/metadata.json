@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["masyaallah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-6", "religious-expression", "verbatim-preservation", "arabic-origin", "growth-marvel"],
+  "dr_section_ref": "architecture §11 + DR §6 (religious expressions preserved verbatim)",
+  "notes": "Comment on someone (often a child or pet) growing fast. 'cepet' is informal of 'cepat' (fast). VERIFY WITH GIRLFRIEND: this is the contrasting case to the subhanallah/case_002 child-growth fixture — confirms masyaallah is the more conventional choice for marveling at human/animal growth, with subhanallah reserved for natural phenomena. If correct, the subhanallah/case_002 fixture should migrate here in a follow-up."
+}

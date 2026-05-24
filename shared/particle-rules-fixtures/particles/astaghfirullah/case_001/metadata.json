@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["astaghfirullah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-6", "religious-expression", "verbatim-preservation", "arabic-origin", "regret-admission"],
+  "dr_section_ref": "architecture §11 + DR §6 (religious expressions preserved verbatim)",
+  "notes": "'astaghfirullah' = 'I seek God's forgiveness', expresses regret or concern. Often used colloquially for minor mistakes ('oh no') rather than serious moral failure. Verbatim preservation avoids the liturgical-heavy literal. Variant 'astaghfirullahaladzim' (longer form) deferred. VERIFY WITH GIRLFRIEND: whether 'astaghfirullah' is reserved for serious regret or used casually for everyday slip-ups in your conversational register; if mostly casual, the English-side partner might want to know it carries less weight than 'I seek God's forgiveness' suggests."
+}

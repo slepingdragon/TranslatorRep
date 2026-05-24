@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["alhamdulillah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-6", "religious-expression", "verbatim-preservation", "arabic-origin", "good-news-share"],
+  "dr_section_ref": "architecture §11 + DR §6 (religious expressions preserved verbatim)",
+  "notes": "'alhamdulillah' in announcement-of-good-news position. 'kerjaan' is colloquial for 'pekerjaan' (job). VERIFY WITH GIRLFRIEND: whether casual 'kerjaan' (which the NMT may render as 'job' or 'gig') survives translation in a way that matches your conversational register."
+}

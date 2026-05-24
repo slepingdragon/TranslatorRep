@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["dia"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-3", "gender-neutral-pronoun", "singular-they-default", "object-position"],
+  "dr_section_ref": "architecture §11 + DR §6.3 (gender-neutral dia → they)",
+  "notes": "Object-position 'dia' → English 'them' (singular-they object form). 'ketemu' is the colloquial 'meet/run into'. The NMT typically handles position transformation (dia → them in English object slot) without needing the rule to inject — the rule's primary value here is the marker tag preventing the NMT from picking he/she. VERIFY WITH GIRLFRIEND: 'them' for a single person can read awkward in some registers ('I ran into him/her yesterday' is more colloquial when gender is known). This fixture stays gender-neutral as the safe default."
+}

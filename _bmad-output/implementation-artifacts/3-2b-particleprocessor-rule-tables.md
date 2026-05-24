@@ -4,10 +4,12 @@ Status: in-progress
 
 <!-- Created 2026-05-24 (Phase 1 of N) on feature/3-2b-tq1-kan-sih-dong-deh.
 
-     Multi-PR rollup story. Phase 1 (this PR): landed kan + sih + dong + deh
-     (4 of 13 remaining TQ-1 particles). Subsequent phases add more particles +
-     other TQ categories. Story flips to `review` → `done` when the FULL original
-     Story 3.2 AC (14 TQ-1 + TQ-3/4/5/6/7/8 categories) is populated.
+     Multi-PR rollup story. Phases 1-3 (landed 2026-05-24): TQ-1 COMPLETE
+     (all 14 Indonesian discourse particles, 42 fixtures, 5 helpers).
+     Phase 4 (this PR, 2026-05-24): TQ-3 gender-neutral `dia → they` + TQ-6
+     6 religious-expression verbatim rules. 2 new helpers. 21 new fixtures
+     (now 63 total). AC-1 + AC-2 + AC-6 + AC-8 + AC-9 + AC-10 ✅. AC-3, AC-4,
+     AC-5, AC-7 deferred to Phase 5 (need Story 3.1 linguistic input).
 
      iOS Swift parity is Story 3.2c (Mac/iOS Claude session). -->
 
@@ -28,13 +30,13 @@ so that the on-device translation pipeline can preserve cultural-pragmatic conte
 3. **AC-3 (TQ-8: ≥20 Gen-Z slang items):** `GenZSlang.kt` populated; ≥20 slang items with their target equivalents + ≥3 fixtures each. **0 of 20 done.**
 4. **AC-4 (TQ-4: ≥12 Sundanese lexical insertions):** `SundaneseInsertions.kt` populated as a side-channel processor (renders `RenderMode.SUNDANESE_PLACEHOLDER` rather than injecting an equivalent). **0 of 12 done.**
 5. **AC-5 (TQ-5: partner honorifics + strip rules):** `HonorificStripping.kt` implements detect + strip/preserve per intimate-vs-formal register decisions from DR §6. **Not started.**
-6. **AC-6 (TQ-6: religious-expression verbatim preservation):** `ReligiousExpressions.kt` dictionary of Arabic-origin religious expressions; postProcess preserves them verbatim. **Not started.**
+6. **AC-6 (TQ-6: religious-expression verbatim preservation):** `verbatimReligious` helper in `ParticleRules.kt` registers 6 Arabic-origin religious expressions (`alhamdulillah`, `insyaallah`, `bismillah`, `subhanallah`, `astaghfirullah`, `masyaallah`); preProcess tags each, postProcess substitutes marker → same lowercase term verbatim. 18 fixtures (6 × 3) — all with VERIFY-WITH-GIRLFRIEND notes. Multi-word variants (`insya Allah` etc.) deferred. **✅ Phase 4.** (The `ReligiousExpressions.kt` stub file is kept for future expansion + iOS parity scaffolding.)
 7. **AC-7 (TQ-7: indirect refusals):** `IndirectRefusals.kt` detects + annotates indirect refusal patterns per DR §6. **Not started.**
-8. **AC-8 (TQ-3: gender-neutral `dia → they` default):** New rule that handles Indonesian gender-neutral pronouns, defaulting to English singular-they (not he/she). Currently inlined in `loh/case_003` metadata as an observation only — needs a code rule. **Not started.**
+8. **AC-8 (TQ-3: gender-neutral `dia → they` default):** `genderNeutralPronoun` helper in `ParticleRules.kt` registers `dia` (placed AFTER `mah` so `<pronoun> mah` collisions resolve correctly). Target equivalent = `"they"` (singular-they default per architecture §11 / DR §6.3); inject conservatively replaces stray `he/she` from NMT. 3 fixtures (subject + object + preference). Object/possessive forms (`him`/`her`/`his`/`-nya`) deferred pending Story 3.1 conversational evidence. **✅ Phase 4.**
 9. **AC-9 (Generalized fixture test):** `ParticleProcessorFixtureTest.kt` iterates every `particles/<rule>/case_NNN/` dir without hardcoded rule names — Phase 1 ✅.
 10. **AC-10 (Multi-punct cleanup):** `ParticleProcessor.postProcess` collapses duplicated terminal punctuation (`??` → `?`, `!!` → `!`) so rule equivalents containing `?` (e.g., `kan` → `, right?`) don't leave artifacts when injected before an existing source-side `?` — Phase 1 ✅.
 
-**Done criteria:** Story 3.2b flips to `review` when AC-1, AC-2, AC-3, AC-4, AC-5, AC-6, AC-7, AC-8 are all ✅. AC-9 + AC-10 are infrastructure ACs satisfied by Phase 1.
+**Done criteria:** Story 3.2b flips to `review` when AC-1, AC-2, AC-3, AC-4, AC-5, AC-6, AC-7, AC-8 are all ✅. AC-9 + AC-10 are infrastructure ACs satisfied by Phase 1. **Post-Phase-4 status:** AC-1, AC-2, AC-6, AC-8, AC-9, AC-10 ✅; AC-3 (TQ-8 slang), AC-4 (TQ-4 Sundanese), AC-5 (TQ-5 honorifics), AC-7 (TQ-7 refusals) remain — Phase 5 (needs Story 3.1 input).
 
 ## Tasks / Subtasks
 
@@ -72,21 +74,30 @@ so that the on-device translation pipeline can preserve cultural-pragmatic conte
 
 **Caveat on the `--rerun-tasks` requirement:** Gradle doesn't track `/shared/particle-rules-fixtures/` as test inputs (the directory is outside the Android module). Adding new fixtures locally won't trigger test re-run via standard `./gradlew :app:testDebugUnitTest` — must use `--rerun-tasks` or modify a Kotlin source file to bust the cache. CI is unaffected (fresh runner = always re-runs). Worth tracking as a deferred-work item to add `inputs.dir("$rootDir/../shared/particle-rules-fixtures")` to the test task wiring.
 
-### Phase 4 — TQ-8 Gen-Z slang dictionary (future PR; was Phase 3, renumbered after the Phase 2 → 2+3 split)
+### Phase 4 — TQ-3 gender-neutral `dia` + TQ-6 religious verbatim (this PR, 2026-05-24)
 
-- [ ] Populate `GenZSlang.kt` with ≥20 contemporary slang items + their target equivalents. Examples: `gabut` (bored), `mager` (lazy), `cuy` (mate/dude), `bestie`, `gass` (let's go), `santuy` (chill), `mantap` (awesome), `auto` (automatically), `wkwkwk` (haha), `sotoy` (know-it-all), `kepo` (nosy), `gws` (get well soon), `btw`, `omg`, `pengen` (want), `bgt` (very), `udh` (already), `gak` (no/not), `nyariin` (looking for), `lemes` (weak/tired).
-- [ ] ≥3 fixtures per slang item. Position-aware inject (slang substitutes the source token, doesn't append at end).
-- [ ] Defer-decision: Phase 3 might warrant its own helper `wordSubstitutionRule(sourceToken, targetEquivalent)` since the substitution semantics differ from sentence-final discourse particles.
+The "easier" half of the remaining AC surface — no native-speaker linguistic
+input required (architecture §11 + DR §6.3 are clear specs; honorifics/slang/
+Sundanese/refusals are the harder set deferred to Phase 5 pending Story 3.1).
+Per `docs/project-context.md` §13 this is "Session 7 — Particle rules — easier".
 
-### Phase 5 — TQ-3/4/5/6/7 categories (future PRs; was Phase 4, renumbered)
+- [x] **TQ-3 `genderNeutralPronoun` helper + `dia` rule.** Detects standalone `dia` (subject or object position) as a whole word case-insensitively; target equivalent = `"they"` (singular-they default per architecture §11 / DR §6.3). Registered AFTER `mah` in `allRules` to keep `dia mah` collisions tagged by `mah` first (mah's pronoun list includes `dia`). Inject is conservative — replaces the first `\b(he|she|He|She)\b` in `current` with `they/They` if present; no-op if not. Object/possessive forms (`him`/`her`/`his`/`-nya`) are deferred pending real-conversation evidence from Story 3.1.
+- [x] **TQ-6 `verbatimReligious` helper + 6 rules.** `alhamdulillah`, `insyaallah`, `bismillah`, `subhanallah`, `astaghfirullah`, `masyaallah`. Target equivalent = the same lowercase term — the English-receiving partner is expected to recognize these; literal translations like "thank God" / "God willing" would flatten the cultural-pragmatic register per DR §6 / architecture §11. Multi-word variants (`insya Allah`, `masya Allah`) + Arabic-English transliterations (`inshallah`, `mashallah`) + long-form (`bismillahirrahmanirrahim`, `astaghfirullahaladzim`) deferred — v1 covers single-word Indonesian spellings only.
+- [x] **5 existing fixtures updated** to reflect the new `dia` rule's tagging: `also/case_002`, `juga/case_002`, `kah/case_002`, `loh/case_003`, `mah/case_002` all contained `dia` as a standalone word in their source. Each had `[PARTICLE:dia]` added to `expected_processed.txt` + `"dia"` appended to `metadata.json` `expected_particles`. `expected_target.txt` for all 5 already used singular `they/them/their` (the convention was already in place; this PR makes it enforced by the code path).
+- [x] **21 new fixtures.** 3 cases each for `dia`, `alhamdulillah`, `insyaallah`, `bismillah`, `subhanallah`, `astaghfirullah`, `masyaallah` (7 × 3 = 21). All carry explicit VERIFY-WITH-GIRLFRIEND notes in metadata; religious fixtures also flag multi-word variants and register-fit questions (e.g., subhanallah vs masyaallah for human-vs-natural admiration).
+- [x] **Test assertion relaxed.** `ParticleProcessorFixtureTest.kt` previously asserted `processed.particles == listOf(ruleName)` (strict equality) — multi-particle fixtures (which now exist post-Phase-4) make that wrong. Switched to `processed.particles.contains(ruleName)` with an explicit comment that the full per-fixture particle set is still strictly enforced by the `expected_processed.txt` equality check. A future enhancement could parse `metadata.json`'s `expected_particles` for set-equality assertion (needs a JSON parser; deferred per the original Story 3.2 reasoning).
+- [x] **Local validation.** `./gradlew :app:detekt :app:testDebugUnitTest --rerun-tasks` (per the documented `--rerun-tasks` landmine for fixture changes) — 16s warm-cache, 0 detekt smells, all 63 fixture cases pass (42 prior + 21 new). Fixture-test method now iterates 63 cases internally.
 
-- [ ] **TQ-3 gender-neutral `dia → they` rule.** Verify integration with existing rules — `dia datang besok loh` (loh/case_003) already hand-codes the gender-neutral choice in the expected_target; the new rule should make that automatic.
-- [ ] **TQ-4 Sundanese spans:** side-channel processor in `SundaneseInsertions.kt`; emits `RenderMode.SUNDANESE_PLACEHOLDER` rather than equivalent injection. Different `PostProcessed` shape consumer.
-- [ ] **TQ-5 honorifics:** `HonorificStripping.kt` — register-aware (intimate → strip, formal → preserve).
-- [ ] **TQ-6 religious verbatim:** `ReligiousExpressions.kt` — dictionary lookup, marker substitution returns same token in target (no translation).
-- [ ] **TQ-7 indirect refusals:** `IndirectRefusals.kt` — pragmatic-marker injection.
+**TQ-3 + TQ-6 ACs COMPLETE.** AC-6 + AC-8 ✅. Story 3.2b stays `in-progress` because AC-3 (TQ-8 slang), AC-4 (TQ-4 Sundanese), AC-5 (TQ-5 honorifics), AC-7 (TQ-7 indirect refusals) remain — Phase 5.
 
-### Phase 6 — Done criteria + 3.2b → review (was Phase 5, renumbered)
+### Phase 5 — TQ-4/5/7/8 categories (future PR — needs Bania's girlfriend's linguistic input per Story 3.1)
+
+- [ ] **TQ-8 Gen-Z slang.** Populate `GenZSlang.kt` with ≥20 contemporary slang items + their target equivalents. Examples: `gabut` (bored), `mager` (lazy), `cuy` (mate/dude), `bestie`, `gass` (let's go), `santuy` (chill), `mantap` (awesome), `auto` (automatically), `wkwkwk` (haha), `sotoy` (know-it-all), `kepo` (nosy), `gws` (get well soon), `btw`, `omg`, `pengen` (want), `bgt` (very), `udh` (already), `gak` (no/not), `nyariin` (looking for), `lemes` (weak/tired). ≥3 fixtures per slang item. May warrant a `wordSubstitutionRule` helper since semantics differ from sentence-final discourse particles.
+- [ ] **TQ-4 Sundanese spans.** Side-channel processor in `SundaneseInsertions.kt`; emits `RenderMode.SUNDANESE_PLACEHOLDER` rather than equivalent injection. Different `PostProcessed` shape consumer. Needs Story 3.1 input on which Sundanese lexical insertions actually appear in the partner conversation.
+- [ ] **TQ-5 honorifics.** `HonorificStripping.kt` — register-aware (intimate → strip, formal → preserve). Per architecture §11 line 431-432: `mas → babe` or omit for intimate-partner register.
+- [ ] **TQ-7 indirect refusals.** `IndirectRefusals.kt` — pragmatic-marker injection.
+
+### Phase 6 — Done criteria + 3.2b → review
 
 - [ ] All AC-1 through AC-8 ✅.
 - [ ] Story 3.2b flips to `review`; CR pass; flip to `done`.
@@ -171,31 +182,49 @@ claude-opus-4-7[1m] (autonomous session 2026-05-24, post-PR #8-merge)
 
 ### Completion Notes List
 
-- Phase 1 of 4-5 phases. 5 of 14 TQ-1 particles done.
-- Generalized test method handles all particle dirs without modification — future phases need fixture additions only, not test changes.
-- Multi-punct cleanup is defensive infrastructure that costs nothing for non-punctuation rules.
-- 12 new fixtures all carry explicit VERIFY-WITH-GIRLFRIEND notes; expected_target choices are conscious hypotheses, not assumptions.
+- **Phase 4 (latest):** TQ-3 (`dia → they`) + TQ-6 (6 religious-expression verbatim rules) landed. 7 helpers total (5 previous + 2 new). 63 fixture cases total (42 previous + 21 new). All 5 existing fixtures that contained `dia` in source were updated; no expected_target changes were needed (the singular-they convention was already in place).
+- Phase 1: 5 of 14 TQ-1 particles done. Phase 2: 8 of 14. Phase 3: 14 of 14 (TQ-1 complete). Phase 4: TQ-3 + TQ-6 complete. Phase 5 remaining: TQ-4/5/7/8 (need Story 3.1 GF input).
+- Generalized test method continues to handle all particle dirs without modification — Phase 4 needed test changes ONLY to relax the strict per-fixture `processed.particles == listOf(ruleName)` assertion to `contains(ruleName)`, because multi-particle fixtures now exist. The full per-fixture particle set is still strictly enforced by `expected_processed.txt` equality.
+- Multi-punct cleanup (Phase 1) is defensive infrastructure that costs nothing for non-punctuation rules.
+- All 21 Phase-4 fixtures + 5 updated fixtures carry explicit VERIFY-WITH-GIRLFRIEND notes; expected_target choices are conscious hypotheses, not assumptions. Religious-fixture notes flag multi-word variants (`insya Allah`, `mashallah`, etc.) + register-fit questions (subhanallah vs masyaallah for human-vs-natural admiration).
 
 ### File List
 
-**Created:**
+**Created (Phase 4):**
+
+- `shared/particle-rules-fixtures/particles/dia/case_{001,002,003}/source.txt|expected_processed.txt|expected_target.txt|metadata.json` (12 files)
+- `shared/particle-rules-fixtures/particles/alhamdulillah/case_{001,002,003}/…` (12 files)
+- `shared/particle-rules-fixtures/particles/insyaallah/case_{001,002,003}/…` (12 files)
+- `shared/particle-rules-fixtures/particles/bismillah/case_{001,002,003}/…` (12 files)
+- `shared/particle-rules-fixtures/particles/subhanallah/case_{001,002,003}/…` (12 files)
+- `shared/particle-rules-fixtures/particles/astaghfirullah/case_{001,002,003}/…` (12 files)
+- `shared/particle-rules-fixtures/particles/masyaallah/case_{001,002,003}/…` (12 files)
+
+**Created (Phase 1):**
 
 - `_bmad-output/implementation-artifacts/3-2b-particleprocessor-rule-tables.md` (this file)
-- `shared/particle-rules-fixtures/particles/kan/case_{001,002,003}/source.txt|expected_processed.txt|expected_target.txt|metadata.json` (12 files)
-- `shared/particle-rules-fixtures/particles/sih/case_{001,002,003}/…` (12 files)
-- `shared/particle-rules-fixtures/particles/dong/case_{001,002,003}/…` (12 files)
-- `shared/particle-rules-fixtures/particles/deh/case_{001,002,003}/…` (12 files)
+- `shared/particle-rules-fixtures/particles/{kan,sih,dong,deh,kok,ya,lah,kah,nih,tuh,mah,juga,also}/case_{001,002,003}/…` (Phases 1-3, 13 dirs × 12 files = 156 files)
 
-**Modified:**
+**Modified (Phase 4):**
 
-- `android/app/src/main/java/com/xaeryx/translatorrep/translation/particles/ParticleRules.kt` (helper extraction + 4 new rules)
-- `android/app/src/main/java/com/xaeryx/translatorrep/translation/particles/ParticleProcessor.kt` (multi-punct cleanup added)
-- `android/app/src/test/java/com/xaeryx/translatorrep/translation/particles/ParticleProcessorFixtureTest.kt` (generalized to iterate all rule dirs)
-- `_bmad-output/implementation-artifacts/sprint-status.yaml` (3-2b → in-progress; last_updated bump)
-- `docs/project-context.md` §10 (status note on 3-2b)
+- `android/app/src/main/java/com/xaeryx/translatorrep/translation/particles/ParticleRules.kt` (2 new helpers `genderNeutralPronoun` + `verbatimReligious` + 7 new rule entries + KDoc updated to mention 6 helpers total)
+- `android/app/src/test/java/com/xaeryx/translatorrep/translation/particles/ParticleProcessorFixtureTest.kt` (relaxed strict particle-list assertion to `contains` for multi-particle fixtures)
+- `shared/particle-rules-fixtures/particles/also/case_002/{expected_processed.txt,metadata.json}` (added `[PARTICLE:dia]` tag + `dia` to expected_particles)
+- `shared/particle-rules-fixtures/particles/juga/case_002/{expected_processed.txt,metadata.json}` (same)
+- `shared/particle-rules-fixtures/particles/kah/case_002/{expected_processed.txt,metadata.json}` (same)
+- `shared/particle-rules-fixtures/particles/loh/case_003/{expected_processed.txt,metadata.json}` (same)
+- `shared/particle-rules-fixtures/particles/mah/case_002/{expected_processed.txt,metadata.json}` (same)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (Phase 4 progress note; last_updated bump)
+- `docs/project-context.md` §10 (3-2b status note) + §13 (Session 7 → DONE) + session handoff line
+
+**Modified (Phases 1-3, prior PRs):**
+
+- `android/app/src/main/java/com/xaeryx/translatorrep/translation/particles/ParticleRules.kt` (helper extractions + 14 TQ-1 rules)
+- `android/app/src/main/java/com/xaeryx/translatorrep/translation/particles/ParticleProcessor.kt` (multi-punct cleanup + null-target support)
 
 ### Change Log
 
 - 2026-05-24 — Story 3.2b created (status `in-progress`). Phase 1 landed kan + sih + dong + deh (4 of 13 remaining TQ-1 particles); helper-extracted ParticleRules; generalized fixture test; multi-punct cleanup. Phases 2-5 add the remaining TQ-1 particles + TQ-3/4/5/6/7/8 categories incrementally.
 - 2026-05-24 (later) — **Phase 2** landed kok + ya + lah (3 more sentence-final particles). TQ-1 progress: 8 of 14 done. The remaining 6 (kah/nih/tuh/mah/juga/also) all need NEW helpers because they don't fit the sentence-final pattern — split out into Phase 3 with explicit design notes (suffix-detect for kah; deictic-position for nih/tuh; mid-sentence position-aware for mah/juga/also). Phase numbers 3–5 renumbered to 4–6 to accommodate the new Phase 3. Test infrastructure unchanged — the generalized fixture test auto-picked up the 3 new fixture dirs without any code changes (delivers the "phase 2+ needs zero test changes" promise from Phase 1).
 - 2026-05-24 (even later) — **Phase 3** landed kah + nih + tuh + mah + juga + also via 4 new helpers (`formalQuestionSuffix`, `sentenceInitialDeictic`, `pronounConcessive`, `midSentenceAlso`). Required null-target support in `ParticleProcessor.postProcess` (Pass 1 strips markers with no equivalent; Pass 2 adds to preserved on detect even when equivalent is null) + `applicableRules` filter update to allow rules with empty `targetEquivalents`. **TQ-1 IS COMPLETE: 14 of 14 particles + 42 of 42 fixtures.** AC-1 + AC-2 ✅. Story 3.2b stays `in-progress` because TQ-3/4/5/6/7/8 (AC-3..AC-8) are still pending Phases 4-5.
+- 2026-05-24 (Phase 4) — **TQ-3 + TQ-6 LANDED.** 2 new helpers (`genderNeutralPronoun`, `verbatimReligious`) + 7 new rule entries (`dia` + 6 religious terms). 21 new fixtures (3 each for dia/alhamdulillah/insyaallah/bismillah/subhanallah/astaghfirullah/masyaallah). 5 existing fixtures updated to add `[PARTICLE:dia]` tag + metadata (also/case_002, juga/case_002, kah/case_002, loh/case_003, mah/case_002 — all already used singular `they/them` in expected_target so no target changes needed). Test assertion relaxed from `processed.particles == listOf(ruleName)` (strict equality) to `processed.particles.contains(ruleName)` since multi-particle fixtures now exist; the full per-fixture set is still strictly enforced by `expected_processed.txt` equality. **63 of 63 fixture cases pass.** AC-6 + AC-8 ✅. Remaining: AC-3 (TQ-8 slang), AC-4 (TQ-4 Sundanese), AC-5 (TQ-5 honorifics), AC-7 (TQ-7 refusals) — Phase 5 (needs Story 3.1 input). Per `docs/project-context.md` §13 this was "Session 7 — Particle rules — easier" (no native-speaker input required for the chosen categories).
