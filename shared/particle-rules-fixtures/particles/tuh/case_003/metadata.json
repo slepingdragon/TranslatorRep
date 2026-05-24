@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["tuh"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "distal-deictic", "sentence-initial", "vindication-marker"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (tuh as vindication marker)",
+  "notes": "Sentence-initial 'tuh' before a vindication statement ('aku sudah bilang' = 'I already said/told') — speaker is invoking prior knowledge to say 'I told you so' gently. English 'There, I already told you' lands the same vindication register. VERIFY WITH GIRLFRIEND: 'See, I told you' is more idiomatic English; 'There' is the literal translation of tuh. Either could be the right call depending on tone."
+}

@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["juga"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "sentence-final-also", "preference-agreement"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (juga sentence-final)",
+  "notes": "Sentence-final juga ('Aku suka kopi juga' = 'I like coffee too') — this position works cleanly with our rule's sentence-final-style inject. Most natural Indonesian juga position for declarative statements. VERIFY WITH GIRLFRIEND: 'I also like coffee' is more formal; 'I like coffee too' is conversational + matches the rule's literal equivalent."
+}

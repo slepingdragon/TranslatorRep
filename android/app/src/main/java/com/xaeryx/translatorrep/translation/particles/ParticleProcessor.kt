@@ -20,12 +20,13 @@ import com.xaeryx.translatorrep.translation.TranslationStatus
  * (which most NMTs do at least some of the time). Idempotent — calling
  * [postProcess] on an already-post-processed string returns it unchanged.
  *
- * **Scope of THIS file (Story 3.2 Android-only):** Only the [ParticleRules.allRules]
- * registry of TQ-1 Indonesian discourse particles is functional, and only the
- * `loh` rule within that. The 5 sibling files
+ * **Scope of THIS file (post Story 3.2b Phase 3):** All 14 TQ-1 Indonesian
+ * discourse particles registered in [ParticleRules.allRules] via 4 distinct
+ * helpers ([sentenceFinalParticle], [formalQuestionSuffix], [sentenceInitialDeictic],
+ * [pronounConcessive], [midSentenceAlso]). The 5 sibling category files
  * ([SundaneseInsertions], [HonorificStripping], [IndirectRefusals], [GenZSlang],
- * [ReligiousExpressions]) are stubs. Sub-letter follow-up stories (3.2b, 3.2c…)
- * fill the remaining rule tables. iOS Swift parity is Story 3.2c (Mac/iOS session).
+ * [ReligiousExpressions]) are still stubs — Phase 4+ fills them. iOS Swift parity
+ * is Story 3.2c (Mac/iOS session).
  */
 object ParticleProcessor {
 
@@ -80,35 +81,52 @@ object ParticleProcessor {
         val rules = ParticleRules.applicableRules(sourceLang, targetLang)
 
         // Pass 1: substitute any markers the NMT preserved.
+        //
+        // Three sub-cases per marker:
+        //   (a) Rule found AND has non-null target equivalent → substitute marker
+        //       with equivalent; add to preserved.
+        //   (b) Rule found BUT null target equivalent (e.g., `kah` formal-question
+        //       suffix where English doesn't need a marker; `mah` concessive where
+        //       NMT itself produces the "as for X" rendering) → silently strip the
+        //       marker; add to preserved (we DID handle it, just non-injectively).
+        //   (c) No rule found (orphan marker from a rule that was removed) → strip
+        //       silently to avoid leaking `[PARTICLE:foo]` to the UI; do NOT add
+        //       to preserved (we don't know what we handled).
         val markerMatches = MARKER_REGEX.findAll(current).toList().reversed()
         for (match in markerMatches) {
             val particleName = match.groupValues[1]
             val rule = rules.firstOrNull { it.name == particleName }
             val equivalent = rule?.targetEquivalent(targetLang)
-            if (equivalent != null) {
-                current = current.substring(0, match.range.first) +
-                    equivalent +
-                    current.substring(match.range.last + 1)
+            val substitute = equivalent ?: ""
+            current = current.substring(0, match.range.first) +
+                substitute +
+                current.substring(match.range.last + 1)
+            if (rule != null) {
                 preserved.add(particleName)
-            } else {
-                // Unknown marker — strip it silently rather than leaking to UI.
-                current = current.substring(0, match.range.first) +
-                    current.substring(match.range.last + 1)
             }
         }
 
-        // Pass 2: re-detect particles from source; inject any equivalent that
-        // isn't already in `current`. Nested-if form (rather than guard +
-        // continue) keeps detekt's LoopWithTooManyJumpStatements rule happy.
+        // Pass 2: re-detect particles from source. For each detected rule:
+        //   (a) targetEquivalent is non-null AND already present in `current` →
+        //       idempotency hit; mark preserved, no inject.
+        //   (b) targetEquivalent is non-null AND not present → inject; mark preserved.
+        //   (c) targetEquivalent is null (kah/mah style) → mark preserved (Pass 1
+        //       handled the marker, or the NMT itself produced the natural rendering);
+        //       no inject.
+        //
+        // Nested-if form (rather than guard + continue) keeps detekt's
+        // LoopWithTooManyJumpStatements rule happy.
         for (rule in rules) {
             val alreadyPreserved = preserved.contains(rule.name)
             if (!alreadyPreserved) {
                 val sourceMatch = rule.detect(originalSource)
-                val equivalent = rule.targetEquivalent(targetLang)
-                if (sourceMatch != null && equivalent != null) {
-                    if (current.contains(equivalent)) {
-                        // Idempotency: equivalent already present (this postProcess
-                        // call is a no-op for this particle).
+                if (sourceMatch != null) {
+                    val equivalent = rule.targetEquivalent(targetLang)
+                    if (equivalent == null) {
+                        // Null-target rule (kah/mah): marker handling done in Pass 1;
+                        // NMT did the actual target rendering. Mark as preserved.
+                        preserved.add(rule.name)
+                    } else if (current.contains(equivalent)) {
                         preserved.add(rule.name)
                     } else {
                         current = rule.inject(current, equivalent, sourceMatch)

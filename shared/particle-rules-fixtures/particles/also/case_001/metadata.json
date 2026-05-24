@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["also"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "loanword", "code-switching", "rare-usage"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (also as English loanword)",
+  "notes": "RARE USAGE CAVEAT: 'also' as an Indonesian loanword is uncommon in casual speech — most speakers use 'juga'. This fixture exists because the original Story 3.2 AC explicitly enumerated 'also' as a TQ-1 rule. Code-switching 'Saya also lapar' = 'I'm also hungry' would more typically appear in younger urban speech mixing English vocabulary. VERIFY WITH GIRLFRIEND: does anyone in your conversation circle actually use 'also' this way, or should this rule be removed entirely? If never used, deleting the rule + fixtures simplifies maintenance."
+}

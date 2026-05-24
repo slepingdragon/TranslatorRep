@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["juga"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "mid-sentence-also", "agreement-response"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (juga)",
+  "notes": "Most common juga use: 2-word agreement response 'Saya juga' = 'Me too'. The English uses 'too' (matching rule equivalent ' too'). VERIFY WITH GIRLFRIEND: 'me too' (lowercase, no period) might be more conversational; this fixture uses sentence-case start to match typical caption rendering. Could also render as 'I also' but 'me too' is the natural English pattern."
+}

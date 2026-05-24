@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["mah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "concessive", "topicalization", "null-target", "inclusive-kita"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (mah on inclusive kita)",
+  "notes": "Concessive mah on 'kita' (inclusive 'we' — includes the listener). 'Harus sabar' = 'must be patient'. The English 'As for us, we have to be patient' preserves both the topicalization and the inclusive-we semantics. VERIFY WITH GIRLFRIEND: 'We just have to be patient' is less topicalized but more natural English."
+}

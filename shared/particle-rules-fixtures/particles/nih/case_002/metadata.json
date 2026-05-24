@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["nih"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "proximal-deictic", "sentence-initial", "attention-direct"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (nih as attention-direct)",
+  "notes": "Sentence-initial 'nih' directing attention to something the speaker is showing. 'Lihat ini' = 'look at this'. English 'Here, look at this' preserves both the offering-attention marker and the imperative. VERIFY WITH GIRLFRIEND: this is the most common nih use in casual conversation — does the comma after 'Here' land naturally or does 'Here look at this' read better?"
+}
