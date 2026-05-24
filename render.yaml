@@ -1,0 +1,47 @@
+# render.yaml — Render Blueprint for the TranslatorRep auth-proxy.
+# Story 2.1 (deploy layer). SFU = LiveKit Cloud (Oracle dropped); the auth-proxy
+# (infra/auth-proxy/) runs here as a Docker web service. Render provides HTTPS +
+# a public URL; the Android client POSTs /v1/token to it to get a short-lived,
+# room-scoped LiveKit JWT after Firebase Auth + App Check verification.
+#
+# Setup (one-time, Brady): docs/runbooks/livekit-cloud-render-setup.md.
+# Render → New → Blueprint → connect this repo → enter the four `sync: false`
+# secrets in the dashboard (NEVER committed). The app reads Render's injected
+# $PORT automatically (Express `app.listen(env.PORT)`).
+services:
+  - type: web
+    name: translatorrep-auth-proxy
+    runtime: docker
+    # Build only the auth-proxy (monorepo: android/, ios/, infra/ live alongside).
+    rootDir: infra/auth-proxy
+    dockerfilePath: ./Dockerfile
+    # Singapore = closest Render region to Indonesia (match the LiveKit Cloud region).
+    region: singapore
+    # `starter` is always-on (no cold starts mid-call-setup). `free` works for
+    # testing but spins down after ~15 min idle (first token request then pays a
+    # ~30s cold start). Security/privacy are identical on both.
+    plan: starter
+    healthCheckPath: /v1/healthz
+    # Deploy on demand (dashboard), not on every push to main — review before
+    # shipping a token-minting service.
+    autoDeploy: false
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Non-secret, known value.
+      - key: FIREBASE_PROJECT_ID
+        value: translatorrep-8d773
+      # ── Secrets / project-specific — entered in the Render dashboard, never git ──
+      # The LiveKit Cloud project websocket URL, e.g. wss://<project>.livekit.cloud
+      - key: LIVEKIT_WS_URL
+        sync: false
+      # LiveKit Cloud API key + secret (Project → Settings → Keys). The auth-proxy
+      # signs JWTs with these; they must never leave Render's secret store.
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
+        sync: false
+      # Firebase service-account JSON, base64 (one line). Gives the auth-proxy
+      # server-side ID-token + App Check verification + Firestore /pairs read.
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON_BASE64
+        sync: false

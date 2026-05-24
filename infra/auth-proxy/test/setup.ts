@@ -10,7 +10,7 @@
 process.env.NODE_ENV = "test";
 process.env.LIVEKIT_API_KEY = "APIxxxxxxxxxxxx";
 process.env.LIVEKIT_API_SECRET = "0123456789abcdef0123456789abcdef";
-process.env.LIVEKIT_WS_URL = "wss://sfu.xaeryx.com";
+process.env.LIVEKIT_WS_URL = "wss://test-project.livekit.cloud";
 process.env.FIREBASE_PROJECT_ID = "test-project";
 process.env.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 = Buffer.from(
     JSON.stringify({
