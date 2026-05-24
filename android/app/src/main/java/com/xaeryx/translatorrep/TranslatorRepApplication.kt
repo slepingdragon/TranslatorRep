@@ -2,9 +2,14 @@ package com.xaeryx.translatorrep
 
 import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.room.Room
 import com.xaeryx.translatorrep.firebase.FirebaseBootstrap
 import com.xaeryx.translatorrep.pairing.AnonymousAuthRepository
 import com.xaeryx.translatorrep.pairing.FirebaseAuthGatewayImpl
+import com.xaeryx.translatorrep.pairing.PairingFirestoreRepository
+import com.xaeryx.translatorrep.pairing.PairingStatusRepository
+import com.xaeryx.translatorrep.pairing.local.PairingDatabase
+import com.xaeryx.translatorrep.pairing.local.RoomPairingMirror
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -37,6 +42,23 @@ class TranslatorRepApplication : Application() {
     /** App-wide anonymous-auth state holder (Story 1.8). Shared with all screens. */
     val authRepository: AnonymousAuthRepository by lazy {
         AnonymousAuthRepository(FirebaseAuthGatewayImpl())
+    }
+
+    private val pairingDatabase: PairingDatabase by lazy {
+        Room.databaseBuilder(this, PairingDatabase::class.java, PairingDatabase.NAME)
+            // The mirror is a rebuildable cache of Firestore /pairs — a destructive recreate
+            // on a future schema bump is acceptable (no user data is lost permanently).
+            .fallbackToDestructiveMigration()
+            .build()
+    }
+
+    /** App-wide pairing status (Story 1.11): Room mirror + live /pairs listener. */
+    val pairingStatusRepository: PairingStatusRepository by lazy {
+        PairingStatusRepository(
+            directory = PairingFirestoreRepository(),
+            mirror = RoomPairingMirror(pairingDatabase.pairedPartnerDao()),
+            scope = appScope,
+        )
     }
 
     override fun onCreate() {
