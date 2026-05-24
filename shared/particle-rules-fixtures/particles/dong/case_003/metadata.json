@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["dong"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "soft-command", "concrete-action"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (dong)",
+  "notes": "Sentence-final 'dong' on a concrete-action command ('buka pintunya' = 'open the door, [definite article -nya]') — soft request rather than barked order. English 'please' lands cleanly. VERIFY WITH GIRLFRIEND: in some registers 'mind' or 'could you' might be more polite English equivalents; ', please' is the direct/conversational match."
+}

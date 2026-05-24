@@ -3,16 +3,21 @@ package com.xaeryx.translatorrep.translation.particles
 /**
  * Registry of all particle preservation rules for the [ParticleProcessor].
  *
- * **Scope of THIS file (Story 3.2 Android-only):** Only the TQ-1 Indonesian
- * discourse particle `loh` is fully implemented. The remaining 13 TQ-1
- * particles (`kan`, `sih`, `dong`, `deh`, `kok`, `ya`, `lah`, `kah`, `nih`,
- * `tuh`, `mah`, `juga`, `also`) are queued as Story 3.2b. The structural
- * pattern is clear: each particle is one [ParticleRule] entry below. New
- * particles drop in without changing [ParticleProcessor].
+ * **Scope of THIS file (Story 3.2b Phase 1):** 5 of 14 TQ-1 Indonesian
+ * discourse particles fully implemented (`loh`, `kan`, `sih`, `dong`, `deh`).
+ * Remaining 9 (`kok`, `ya`, `lah`, `kah`, `nih`, `tuh`, `mah`, `juga`, `also`)
+ * queued as Story 3.2b Phase 2+. TQ-3/4/5/6/7/8 categories deferred entirely.
+ * iOS Swift parity is Story 3.2c.
  *
  * Source of truth for rule semantics: Domain Research §1 (Indonesian
  * discourse particles) + §3 (Gen-Z slang) + §4 (Sundanese insertions) +
  * §6 (cultural-pragmatic). Cross-reference: `shared/particle-rules-fixtures/`.
+ *
+ * All five rules so far share the same shape — sentence-final discourse
+ * particles with a comma-prefixed English equivalent. The
+ * [sentenceFinalParticle] helper captures that shape so adding new entries
+ * is a single line. New categories (slang word-substitution, Sundanese
+ * spans, religious verbatim) will need different helpers.
  */
 internal object ParticleRules {
 
@@ -26,55 +31,68 @@ internal object ParticleRules {
         allRules.filter { it.sourceLang == sourceLang && it.targetEquivalent(targetLang) != null }
 
     /**
-     * All registered rules. Order matters slightly: longer-match particles
-     * should appear before substrings of themselves to avoid greedy mismatch.
-     * For TQ-1 alone there's no overlap; revisit when TQ-8 slang lands.
+     * All registered rules. Order matters: if two patterns could match the same
+     * span, the first registered wins (relevant once TQ-8 slang rules land,
+     * where short slang tokens could overlap with particle names).
      */
     private val allRules: List<ParticleRule> = listOf(
-        // ── TQ-1: `loh` (sentence-final, gentle insistence + emotional weight)
-        ParticleRule(
-            name = "loh",
-            sourceLang = "id-ID",
-            // Detect a sentence-final "loh" preceded by whitespace and optionally
-            // followed by terminal punctuation. The lookbehind `(?<=\s)` keeps the
-            // preceding space OUT of the match so substitution preserves it
-            // (otherwise marker insertion would butt up against the previous word).
-            detect = { text ->
-                val match = Regex(
-                    pattern = """(?<=\s)loh(?=[\s.,!?;:]*$)""",
-                    options = setOf(RegexOption.IGNORE_CASE),
-                ).find(text)
-                match?.let { ParticleMatch(startIndex = it.range.first, endIndex = it.range.last + 1, matched = it.value) }
-            },
-            targetEquivalents = mapOf(
-                "en-US" to ", you know",
-            ),
-            // For loh: inject the equivalent JUST BEFORE the trailing punctuation
-            // (or at the end if no punctuation). E.g.: "I miss you." + ", you know"
-            // → "I miss you, you know."
-            inject = { current, equivalent, _ ->
-                val trailingPunct = Regex("""[.,!?;:]+\s*$""").find(current)
-                if (trailingPunct != null) {
-                    current.substring(0, trailingPunct.range.first) + equivalent + trailingPunct.value
-                } else {
-                    current + equivalent
-                }
-            },
-        ),
+        // ── TQ-1 discourse particles, sentence-final position, comma-prefix English equivalent
+        sentenceFinalParticle(name = "loh", englishEquivalent = ", you know"),
+        sentenceFinalParticle(name = "kan", englishEquivalent = ", right?"),
+        sentenceFinalParticle(name = "sih", englishEquivalent = ", though"),
+        sentenceFinalParticle(name = "dong", englishEquivalent = ", please"),
+        sentenceFinalParticle(name = "deh", englishEquivalent = ", then"),
 
-        // TODO Story 3.2b: kan (tag-question / "right?")
-        // TODO Story 3.2b: sih (mild contrast / "though")
-        // TODO Story 3.2b: dong (affectionate command / "please")
-        // TODO Story 3.2b: deh (acceptance / "okay then")
-        // TODO Story 3.2b: kok (mild surprise / "huh")
-        // TODO Story 3.2b: ya (confirmation / "yes/right")
-        // TODO Story 3.2b: lah (emphasis / "indeed")
-        // TODO Story 3.2b: kah (formal question marker — usually drop in target)
-        // TODO Story 3.2b: nih (proximal "this here")
-        // TODO Story 3.2b: tuh (distal "that there")
-        // TODO Story 3.2b: mah (concession / "as for")
-        // TODO Story 3.2b: juga (also)
-        // TODO Story 3.2b: also (loanword; same semantics as juga)
+        // TODO Story 3.2b Phase 2: kok (mild surprise — "how come" / "huh?")
+        // TODO Story 3.2b Phase 2: ya (confirmation tag — "right?" / "yeah?")
+        // TODO Story 3.2b Phase 2: lah (emphasis — "indeed" / "of course")
+        // TODO Story 3.2b Phase 2: kah (formal question marker — usually drop in target, no equivalent inject)
+        // TODO Story 3.2b Phase 2: nih (proximal "this here" — sentence-initial common, different pattern)
+        // TODO Story 3.2b Phase 2: tuh (distal "that there" — sentence-initial common, different pattern)
+        // TODO Story 3.2b Phase 2: mah (concession / "as for" — mid-sentence position, different detect)
+        // TODO Story 3.2b Phase 2: juga (also — mid-sentence "as well")
+        // TODO Story 3.2b Phase 2: also (Indonesian loanword; same semantics as juga)
+    )
+
+    /**
+     * Helper for the common case: a sentence-final discourse particle whose
+     * English equivalent is comma-prefixed and inserts just before any trailing
+     * terminal punctuation (or at end of string if no terminal punct).
+     *
+     * Detect regex: `(?<=\s)<name>(?=[\s.,!?;:]*$)` — lookbehind for whitespace
+     * so the marker substitution preserves the leading space; lookahead allows
+     * optional terminal punctuation between the particle and end-of-string.
+     *
+     * Inject: places equivalent immediately before any trailing punctuation,
+     * preserving that punctuation. With multi-punct cleanup in
+     * [ParticleProcessor.postProcess], any `?` duplicated by a `, right?`
+     * equivalent landing before a source `?` collapses to a single `?`.
+     */
+    private fun sentenceFinalParticle(
+        name: String,
+        englishEquivalent: String,
+    ): ParticleRule = ParticleRule(
+        name = name,
+        sourceLang = "id-ID",
+        detect = { text ->
+            // Build pattern with name interpolated as a literal — particle names
+            // are lowercase alpha only (validated by convention), so no regex-escape
+            // is strictly required, but defensively use `Regex.escape` if a future
+            // particle name contains regex metacharacters.
+            val pattern = """(?<=\s)${Regex.escape(name)}(?=[\s.,!?;:]*$)"""
+            Regex(pattern = pattern, options = setOf(RegexOption.IGNORE_CASE))
+                .find(text)
+                ?.let { ParticleMatch(startIndex = it.range.first, endIndex = it.range.last + 1, matched = it.value) }
+        },
+        targetEquivalents = mapOf("en-US" to englishEquivalent),
+        inject = { current, equivalent, _ ->
+            val trailingPunct = Regex("""[.,!?;:]+\s*$""").find(current)
+            if (trailingPunct != null) {
+                current.substring(0, trailingPunct.range.first) + equivalent + trailingPunct.value
+            } else {
+                current + equivalent
+            }
+        },
     )
 }
 

@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["kan"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "TQ-3", "tag-question", "gender-neutral-mereka"],
+  "dr_section_ref": "DR §1 (kan) + DR §6.3 (gender-neutral plural)",
+  "notes": "Sentence-final 'kan' on a perfect-aspect statement ('mereka sudah selesai' = 'they have finished') — speaker is checking a prior assumption. Mereka is grammatically gender-neutral plural; English 'they' is the natural rendering. VERIFY WITH GIRLFRIEND: if the speaker is fairly certain, 'aren't they?' might be stronger; 'right?' is the gentler check."
+}

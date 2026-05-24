@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["dong"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "soft-command", "intimate-register"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (dong)",
+  "notes": "Sentence-final 'dong' softens a command/request — 'Cepetan' ('hurry up') without dong is curt; with dong it's affectionate-impatient (the way you'd say it to a partner, not a stranger). English 'please' lands the soft-command register. VERIFY WITH GIRLFRIEND: 'come on' might capture the affectionate-impatient layer better in some contexts."
+}

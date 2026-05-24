@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["sih"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "mild-contrast", "status-update", "implicit-subject"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (sih)",
+  "notes": "Sentence-final 'sih' on a status update ('belum dapat jawaban' = 'haven't gotten an answer yet') with implicit subject (Indonesian frequently drops subjects in conversation; English fills in with 'I' or 'we' or null). English 'though' preserves the soft-hedge register. VERIFY WITH GIRLFRIEND: if it's a shared task the subject could be 'we'; the rule doesn't know the speaker's intent here. This fixture currently elides the subject in English — alternative could be 'I haven't gotten an answer, though'."
+}

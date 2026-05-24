@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["deh"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "acceptance", "closing-instruction"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (deh)",
+  "notes": "Sentence-final 'deh' wrapping up an instruction with a soft-resolved tone — 'tinggal kabarin saja' = 'just let me know is what's left' (literal: 'just remaining: tell-me'). English ', then' marks the sequencing + closure. VERIFY WITH GIRLFRIEND: 'just let me know, alright' or 'just keep me posted' could be alternative renderings depending on whether the speaker is closing a conversation or assigning a task."
+}
