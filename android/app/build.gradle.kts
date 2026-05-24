@@ -4,13 +4,13 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.detekt)
-    // Firebase plugins disabled until Story 1.4 lands `google-services.json`
-    // at `app/google-services.json`. UN-COMMENT both lines at Story 1.4:
-    //   alias(libs.plugins.google.services)
-    //   alias(libs.plugins.firebase.crashlytics)
-    // The Firebase BOM + per-SDK dependencies in `dependencies { ... }` below
-    // still resolve fine without these plugins; they're just inert (no
-    // FirebaseApp.initializeApp call wired) until Story 1.4.
+    // Firebase plugins activated 2026-05-24 (Story 1.4 Phase 1). The
+    // `google-services` plugin processes `app/google-services.json` at build
+    // time (file is gitignored; Bania places it after Phase 0 manual setup).
+    // `firebase-crashlytics` plugin wires the Crashlytics Gradle hook so
+    // SafeLog's release-build Crashlytics route actually reaches the dashboard.
+    alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 android {
