@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["kok"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "defensive-clarification", "self-exoneration"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (kok, sentence-final use)",
+  "notes": "Sentence-final 'kok' on a self-exonerating statement softens defensiveness while asking the listener to accept the claim — speaker is mildly insisting they aren't to blame. English 'honestly' captures the gentle-defensive register. POLYSEMY NOTE: 'kok' is also a sentence-INITIAL question marker ('Kok kamu telat?' = 'How come you're late?') — that use is NOT covered by this rule and will need a separate Phase 3 design (different pattern entirely). VERIFY WITH GIRLFRIEND: 'I swear' or 'really' might land more naturally; 'honestly' is the most neutral English equivalent."
+}

@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["lah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "self-emphasis", "mild-impatience"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (lah, sentence-final emphasis)",
+  "notes": "Sentence-final 'lah' adds emphasis or mild impatience to a flat statement — 'Aku tahu' alone is neutral; 'Aku tahu lah' has a 'come on, obviously' undertone. English 'obviously' captures the impatient-emphasis register without being rude. VERIFY WITH GIRLFRIEND: 'duh' is more informal and arguably more accurate but can read as flippant — 'obviously' is safer. 'Of course' is another candidate that's gentler than 'obviously'."
+}

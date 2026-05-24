@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["kok"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "defensive-clarification", "state-disclosure"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (kok, sentence-final use)",
+  "notes": "Sentence-final 'kok' admitting a state ('belum mandi' = 'haven't showered') with mild self-defense or honest-disclosure register — the partner pressed and the speaker is conceding. Note: 'belum' translates as 'not yet' / 'haven't yet' (perfect-negative); the English target includes 'yet' to preserve the aspectual meaning. VERIFY WITH GIRLFRIEND: 'I haven't showered, I swear' might fit better when the partner is teasing; 'honestly' is the more neutral-conceding version."
+}

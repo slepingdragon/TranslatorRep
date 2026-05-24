@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["lah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "confident-affirmation", "encouragement"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (lah as confident-affirmation)",
+  "notes": "Sentence-final 'lah' on a capability assertion ('pasti bisa' = 'definitely can / surely able') doubles down on the confidence — speaker is reassuring or pep-talking. English 'obviously' captures the no-doubt register. Indonesian 'pasti bisa' is often subject-elided (could be 'I can', 'you can', 'we can' depending on context); the fixture interprets it as 'we can' for the encouragement use-case. VERIFY WITH GIRLFRIEND: 'of course' might be warmer; 'no doubt' more emphatic; the subject choice (we/you/I) depends on who's being encouraged."
+}

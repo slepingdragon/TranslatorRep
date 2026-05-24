@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["kok"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "defensive-clarification", "reassurance"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (kok, sentence-final use)",
+  "notes": "Sentence-final 'kok' on a teasing-walkback ('cuma bercanda' = 'just joking') reassures the listener the speaker didn't mean offense. English 'honestly' carries the reassurance. VERIFY WITH GIRLFRIEND: 'just kidding, really' or 'I was kidding!' (with stronger emphasis) might capture the lighter mood better."
+}

@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["lah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "obligation-emphasis", "social-norm-invocation"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (lah on obligation-statements)",
+  "notes": "Sentence-final 'lah' reinforces an obligation/norm ('memang harus' = 'of course must / really have to'). 'Memang' already adds emphasis-of-fact; 'lah' compounds it. The translation 'Of course we have to, obviously' is slightly redundant in English (both 'of course' and 'obviously') — that's because Indonesian uses two intensifiers ('memang' + 'lah') where English typically uses one. This is the kind of fixture that will need real-conversation calibration. VERIFY WITH GIRLFRIEND: the doubling might be wrong — could be 'We obviously have to' (single intensifier) or 'Of course we have to!' (exclamation instead of secondary intensifier)."
+}

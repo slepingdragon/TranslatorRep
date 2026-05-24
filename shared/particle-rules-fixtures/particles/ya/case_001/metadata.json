@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["ya"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "confirmation-tag", "comprehension-check"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (ya, sentence-final tag)",
+  "notes": "Sentence-final 'ya' as a comprehension-check tag — speaker is softly confirming the listener follows. Similar but DIFFERENT from kan: 'kan' presupposes shared knowledge ('you know this already, right?'); 'ya' is checking comprehension after explaining something. English 'yeah?' captures the softer-check register; 'right?' is reserved for kan to keep the distinction. POLYSEMY NOTE: 'ya' is also a standalone 'yes' word — the regex requires preceding whitespace, so single-word 'Ya' won't match (no preceding char). 'Iya ya' (yes, right?) would match the sentence-final 'ya'. VERIFY WITH GIRLFRIEND: 'OK?' is also a candidate."
+}

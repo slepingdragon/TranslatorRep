@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["ya"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "soft-instruction-tag", "care-expression"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (ya as care-tag)",
+  "notes": "Sentence-final 'ya' on a care expression ('hati-hati di jalan' = 'be careful on the road') functions as a soft please-acknowledge tag — speaker is asking the partner to receive the care, not just hear it. The reduplicated 'hati-hati' is intensified-careful (NOT a separate rule; just morphology). English 'yeah?' lands gentler than 'OK?' or 'alright?' which can feel demanding. VERIFY WITH GIRLFRIEND: this is the most affectionate use of ya — alternatives 'okay?' / 'mm?' might match her actual register."
+}
