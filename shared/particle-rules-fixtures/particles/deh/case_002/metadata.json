@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["deh"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "acceptance", "joint-decision", "inclusive-kita"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (deh)",
+  "notes": "Sentence-final 'deh' on a joint suggestion ('kita coba lagi' = 'we try again', inclusive-we) — speaker proposing a course of action and marking it as the after-consideration choice. English ', then' captures the move-forward register. VERIFY WITH GIRLFRIEND: 'alright' or 'okay' as the equivalent might land more naturally in some moods ('Let's try again, alright?')."
+}

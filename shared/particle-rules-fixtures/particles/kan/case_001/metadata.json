@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["kan"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "tag-question", "casual-register"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (kan)",
+  "notes": "Sentence-final 'kan' converts a statement into a tag-question seeking confirmation — 'Kamu suka kopi' ('you like coffee') + 'kan' = soft check that the partner remembers/agrees. English 'right?' lands the same gentle-confirmation register. VERIFY WITH GIRLFRIEND: alternative renderings could be 'don't you?' or 'isn't it?' for stronger emphasis."
+}

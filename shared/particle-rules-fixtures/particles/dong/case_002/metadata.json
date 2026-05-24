@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["dong"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "soft-command", "request-favor"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (dong)",
+  "notes": "Sentence-final 'dong' on a favor-request ('ajarin aku' = colloquial 'teach me') softens it into affectionate-coaxing. English 'please' is the closest single-word equivalent. VERIFY WITH GIRLFRIEND: 'would you' or 'come on, teach me' might preserve the coaxing energy better but adds words."
+}

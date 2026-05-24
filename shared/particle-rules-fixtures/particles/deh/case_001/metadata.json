@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["deh"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "acceptance", "self-decision"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (deh)",
+  "notes": "Sentence-final 'deh' marks a self-decision arrived at after consideration — 'I'll eat first, then [moving on]' rather than 'I'll just eat first' (which would be 'aja' not 'deh'). English ', then' captures the sequencing-and-acceptance register. VERIFY WITH GIRLFRIEND: 'I guess I'll eat first' or 'I'll eat first I think' might capture the deliberative quality better."
+}

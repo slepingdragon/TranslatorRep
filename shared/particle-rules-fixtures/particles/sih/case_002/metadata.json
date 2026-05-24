@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["sih"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "mild-contrast", "lukewarm-opinion"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (sih)",
+  "notes": "Sentence-final 'sih' on a lukewarm opinion ('lumayan enak' = 'fairly tasty/decent') signals reservation — speaker is acknowledging the positive while withholding full enthusiasm. English 'though' lands the same hedge. VERIFY WITH GIRLFRIEND: alternatives 'I guess' or 'sort of' might be more native depending on dialect."
+}

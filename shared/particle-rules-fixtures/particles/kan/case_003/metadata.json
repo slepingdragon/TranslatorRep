@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["kan"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "tag-question", "permission-seeking", "intimate-register"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (kan)",
+  "notes": "Sentence-final 'kan' on a permission-seeking statement — speaker checking that a presumed-OK action is actually OK. English 'right?' preserves the soft permission-check. VERIFY WITH GIRLFRIEND: 'is that OK?' or 'do you mind?' might land more naturally in formal English, but ', right?' matches the casual Indonesian register of the source."
+}

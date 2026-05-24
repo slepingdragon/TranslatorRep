@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["sih"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "mild-contrast", "self-disclosure"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (sih)",
+  "notes": "Sentence-final 'sih' softens a self-disclosure with mild contrast — speaker is admitting being tired while implicitly contrasting with an expectation (e.g., 'I should be fine but...'). English 'though' captures the same hedging contrast. VERIFY WITH GIRLFRIEND: 'a bit' or 'kind of' might be more colloquial in some registers."
+}

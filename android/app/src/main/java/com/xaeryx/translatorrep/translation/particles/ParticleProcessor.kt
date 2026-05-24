@@ -123,9 +123,13 @@ object ParticleProcessor {
         //   2. Pull punctuation tight to its preceding word (the loh equivalent
         //      ", you know" inserted after " [PARTICLE:loh]" would otherwise leave
         //      a stray space before the comma).
-        //   3. Trim ends.
+        //   3. Collapse duplicated terminal punctuation (Story 3.2b kan rule's
+        //      ", right?" equivalent injected before an existing source `?` would
+        //      otherwise produce `??`; same for `!`).
+        //   4. Trim ends.
         current = current.replace(Regex("\\s+"), " ")
         current = current.replace(Regex("""\s+([.,!?;:])"""), "$1")
+        current = current.replace(Regex("""([.!?])\1+"""), "$1")
         current = current.trim()
 
         return PostProcessed(

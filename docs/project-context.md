@@ -271,7 +271,7 @@ GitHub Actions free tier = 2000 minutes/month. Solo-dev PR volume <30/month × ~
 | `1-6b-ios-ci-flesh-out` | Story 1.2 | iOS CI flesh-out |
 | `1-6c-infra-ci-flesh-out` | Story 1.3 | infra CI flesh-out |
 | `1-6d-android-ci-flesh-out` | Available now; not picked up yet | Compose UI tests + Roborazzi + assembleRelease + signing-config |
-| `3-2b-particleprocessor-rule-tables` | Available now (no blocker) | Fill in remaining 13 TQ-1 particles + TQ-3/4/5/6/7/8 categories on top of the harness 3-2 just landed |
+| `3-2b-particleprocessor-rule-tables` | Available; in-progress | **Phase 1 landed 2026-05-24**: kan/sih/dong/deh + helper extraction + generalized test + multi-punct cleanup. Phases 2-5 add remaining 9 TQ-1 + TQ-3/4/5/6/7/8 categories. Each phase is a small PR adding particles to the existing harness. |
 | `3-2c-particleprocessor-ios-parity` | Story 1.2 | iOS Swift mirror of `translation/particles/` + cross-platform parity test |
 
 **If an agent is asked to start one of these, check current state in `sprint-status.yaml` first** — many have prep PRs already landed that just need activation, not from-scratch start.
