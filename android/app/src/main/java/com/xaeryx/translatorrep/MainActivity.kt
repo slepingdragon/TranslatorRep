@@ -17,7 +17,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,6 +33,7 @@ import com.xaeryx.translatorrep.pairing.AnonymousAuthRepository
 import com.xaeryx.translatorrep.pairing.AuthState
 import com.xaeryx.translatorrep.pairing.PairingCodeAllocator
 import com.xaeryx.translatorrep.pairing.PairingCodeGenerator
+import com.xaeryx.translatorrep.pairing.PairingCoordinator
 import com.xaeryx.translatorrep.pairing.PairingFirestoreRepository
 import com.xaeryx.translatorrep.pairing.PairingViewModel
 import com.xaeryx.translatorrep.pairing.ui.PairedEmptyScreen
@@ -72,10 +76,21 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background,
                 ) {
                     when (val state = authRepository.state.collectAsStateWithLifecycle().value) {
-                        // Story 1.9: once signed in, the Paired-Empty home is the
-                        // destination (Story 1.11 will branch to the Paired home when
-                        // already paired).
-                        is AuthState.SignedIn -> PairedEmptyRoute(ownerUid = state.uid)
+                        // Story 1.9/1.10: once signed in, show the Paired-Empty home; on a
+                        // successful pair, transition to the Paired home. In-session only —
+                        // restart-persistence (reading /users/{uid}.pairId) is Story 1.11.
+                        is AuthState.SignedIn -> {
+                            var pairId by rememberSaveable { mutableStateOf<String?>(null) }
+                            val current = pairId
+                            if (current == null) {
+                                PairedEmptyRoute(
+                                    ownerUid = state.uid,
+                                    onPaired = { pairId = it },
+                                )
+                            } else {
+                                PairedHomePlaceholder()
+                            }
+                        }
                         else -> AuthGateScreen(
                             authState = state,
                             // Retry is only reachable from AuthState.Failed, so this never
@@ -114,19 +129,57 @@ class MainActivity : ComponentActivity() {
  * framework) — consistent with [TranslatorRepApplication.authRepository].
  */
 @Composable
-private fun PairedEmptyRoute(ownerUid: String) {
+private fun PairedEmptyRoute(ownerUid: String, onPaired: (String) -> Unit) {
     val pairingViewModel: PairingViewModel = viewModel(
         factory = remember(ownerUid) {
+            // One repository instance serves both seams (CodeStore + PairStore).
+            val repository = PairingFirestoreRepository()
             PairingViewModel.Factory(
                 ownerUid = ownerUid,
                 allocator = PairingCodeAllocator(
                     generator = PairingCodeGenerator(),
-                    codeStore = PairingFirestoreRepository(),
+                    codeStore = repository,
                 ),
+                coordinator = PairingCoordinator(codeStore = repository, pairStore = repository),
             )
         },
     )
-    PairedEmptyScreen(viewModel = pairingViewModel)
+    PairedEmptyScreen(viewModel = pairingViewModel, onPaired = onPaired)
+}
+
+/**
+ * Minimal Paired-home placeholder shown after a successful pair (Story 1.10). The real Paired
+ * home — partner display name + the audio/video Call button — is Story 2.2; restart-persistent
+ * routing into it (reading `/users/{uid}.pairId` + the Room mirror) is Story 1.11.
+ */
+@Composable
+private fun PairedHomePlaceholder() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        MonochromeGlassPanel(
+            intensity = GlassIntensity.Regular,
+            modifier = Modifier.padding(horizontal = 32.dp),
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    text = "You're paired!",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = TextPrimary,
+                )
+                Text(
+                    text = "Calling arrives next.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary,
+                )
+            }
+        }
+    }
 }
 
 /**
