@@ -74,7 +74,7 @@ sections_completed:
 TranslatorRep/
 ├── .agents/skills/        # BMad skills (bmad-dev-story, bmad-code-review, etc.)
 ├── .github/workflows/     # CI per stack (android-ci.yml, ios-ci.yml, infra-ci.yml)
-├── .gitattributes         # Scoped LF rule for android/gradlew (Story 1.6 CR)
+├── .gitattributes         # LF rules: android/gradlew (1.6 CR) + *.sh & auth-proxy Dockerfile (1.6c)
 ├── _bmad/                 # BMad config + scripts (bmad-help.csv, customization resolver)
 ├── _bmad-output/
 │   ├── planning-artifacts/    # architecture.md, epics.md, prds/, ux-design-spec, briefs/
@@ -244,7 +244,7 @@ If local fails but CI passes (or vice-versa), suspect (in order): JDK drift → 
 |---|---|---|---|
 | `android-ci.yml` | `android/**`, `shared/**`, `.github/workflows/android-ci.yml` | detekt → testDebugUnitTest → assembleDebug → JUnit annotations → APK 7-day artifact | Story 1.6d adds Compose UI tests + Roborazzi + assembleRelease+signing |
 | `ios-ci.yml` | `ios/**`, `shared/**`, `.github/workflows/ios-ci.yml` | stub on **ubuntu-latest** (flips to macos-latest in 1.6b when xcodebuild lands) | Story 1.6b |
-| `infra-ci.yml` | `infra/**`, `.github/workflows/infra-ci.yml` | stub on ubuntu-latest | Story 1.6c |
+| `infra-ci.yml` | `infra/**`, `.github/workflows/infra-ci.yml` | **Full (1.6c):** config-lint (yamllint + shellcheck + `docker compose config` + `caddy validate`) ‖ auth-proxy (Node 22 npm ci+typecheck+vitest(23)+build) ‖ auth-proxy-docker (distroless image build) | Oracle ssh-deploy step deferred (open hosting decision) |
 
 ### Workflow hardening (per Story 1.6 CR — keep these)
 
@@ -332,7 +332,7 @@ Started: 9 stories done (1.1, 1.5, 1.6, 1.7, 1.14a/b/c, 3.2) + 3.2b in-progress 
 | 3 | Pairing arc — sign-in + code exchange | 1.8, 1.9, 1.10 | Session 1 |
 | 4 | Pairing arc — persistence + identity | 1.11, 1.12, 1.13 | Session 3 |
 | 5 | Release config + Play Store Internal Testing | 1.6d + 1.4c | Session 1 |
-| 6 | Infra CI flesh-out | 1.6c | Session 2 |
+| 6 | Infra CI flesh-out | 1.6c | **DONE 2026-05-24** — decoupled from Session 2 (Oracle): lint/test/build only; ssh-deploy step deferred |
 | 7 | Particle rules completion — easier | 3.2b Phase 4 (TQ-3 + TQ-6) | **DONE 2026-05-24** |
 | 8 | Particle rules completion — harder | 3.2b Phase 4b (TQ-4 + TQ-5 + TQ-7 + TQ-8) | **Bania's girlfriend's linguistic input** for slang/Sundanese |
 | 9 | Audio calling — auth + call placement | 2.1, 2.2, 2.3 | Sessions 2 + 4 |

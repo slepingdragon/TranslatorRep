@@ -1,13 +1,21 @@
 # .github/workflows/infra-ci.yml
-# DEFERRED to Story 1.6c — depends on Story 1.3 (Oracle VM + infra/ directory).
 # Source of truth: architecture.md §"CI/CD Per Stack" row 3.
 # Owning story (stub): 1-6-cicd-per-stack. Owning story (full): 1-6c-infra-ci-flesh-out.
 #
-# When Story 1.6c lights this up, replace the stub job with these steps in order
-# (per architecture.md §"CI/CD Per Stack" row 3):
-#   1. yamllint infra/livekit.yaml + infra/Caddyfile
-#   2. docker compose -f infra/docker-compose.yml config  (validation only, no `up`)
-#   3. on tag push only: ssh oracle-vm && ./infra/scripts/deploy.sh
+# Fleshed out in Story 1.6c (2026-05-24) once Story 1.3 landed real infra/ content
+# (LiveKit + Caddy + docker-compose configs, the auth-proxy TypeScript service with
+# its 23-test vitest suite, and the Oracle capacity-poll script). Three parallel jobs:
+#
+#   - config-lint:        yamllint + shellcheck + `docker compose config` + `caddy validate`
+#   - auth-proxy:         npm ci → typecheck → vitest → tsc build (Node 22, the engines target)
+#   - auth-proxy-docker:  `docker build` the multi-stage distroless image (no push)
+#
+# DEFERRED — tag-triggered `ssh + deploy.sh` on the Oracle VM (architecture row 3 step 3).
+# Not wired: there is no VM to deploy to (Story 1.3 Phase 2 not run) AND the
+# Oracle-vs-LiveKit-Cloud hosting decision is open (see project-context.md §13 /
+# the open architectural question). When that resolves, add a `deploy` job gated on
+# `startsWith(github.ref, 'refs/tags/infra-v')` using an `ORACLE_VM_SSH_KEY` secret —
+# see docs/runbooks/ci-stack-overview.md §5.
 name: infra-ci
 
 on:
@@ -22,18 +30,97 @@ on:
       - '.github/workflows/infra-ci.yml'
   workflow_dispatch: {}
 
+# Cancel in-flight runs on the same ref when a new push arrives.
+# Solo-dev free-tier minute budget — every superseded run is wasted minutes.
 concurrency:
   group: infra-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  infra-ci-stub:
+  # ── Static validation of the deploy-stack config files. ──────────────────
+  config-lint:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:
-      - name: deferral-notice
+      - uses: actions/checkout@v4
+
+      # yamllint via python (pre-installed on ubuntu-latest). `python -m yamllint`
+      # is PATH-independent — avoids the `pip install` user-bin-not-on-PATH trap.
+      # Config at infra/.yamllint.yml relaxes line-length to 120 (config files carry
+      # explanatory comments) and keeps the unix-newline check (catches CRLF leakage).
+      - name: yamllint
         run: |
-          echo "Infra CI deferred to Story 1.6c — Oracle VM + infra/ directory land in Story 1.3."
-          echo "Stub passes so infra PRs aren't blocked. See docs/runbooks/ci-stack-overview.md."
+          python -m pip install --quiet yamllint
+          python -m yamllint -c infra/.yamllint.yml infra/livekit.yaml infra/docker-compose.yml
+
+      # shellcheck is pre-installed on ubuntu-latest. --severity=warning keeps the
+      # info-level SC2029 in deploy.sh (the remote command expands client-side ON
+      # PURPOSE) from failing the build, while still catching real warnings/errors.
+      - name: shellcheck
+        run: shellcheck --severity=warning infra/deploy.sh infra/scripts/*.sh
+
+      # Validate the compose file parses + resolves (schema + interpolation). `config -q`
+      # prints nothing on success; does NOT `up` or build. Unset ${LIVEKIT_*} / ${FIREBASE_*}
+      # vars resolve to empty strings with a stderr warning (exit 0) — they are real
+      # secrets supplied via infra/.env at deploy time, not needed for schema validation.
+      - name: docker-compose-config
+        run: docker compose -f infra/docker-compose.yml config -q
+
+      # Validate the Caddyfile via the official caddy image (no caddy binary on the
+      # runner). `validate` checks config structure + module provisioning; it does NOT
+      # perform ACME / reach the network.
+      - name: caddy-validate
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/infra/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            caddy:2-alpine \
+            caddy validate --adapter caddyfile --config /etc/caddy/Caddyfile
+
+  # ── auth-proxy: typecheck + unit tests + build (the 23-test vitest suite). ──
+  auth-proxy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: infra/auth-proxy
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Matches package.json engines (>=22) + the Dockerfile build stage (node:22).
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: infra/auth-proxy/package-lock.json
+
+      - name: install
+        run: npm ci
+
+      - name: typecheck
+        run: npm run typecheck
+
+      - name: test
+        run: npm test
+
+      - name: build
+        run: npm run build
+
+  # ── Validate the multi-stage distroless image actually builds. No push. ─────
+  # Catches Dockerfile / npm-prune / distroless-copy breakage that the unit-test
+  # job (which runs against source, not the built image) would miss. Worth the
+  # minutes even with Oracle deferred — the auth-proxy is containerized wherever it
+  # ends up running (self-hosted SFU or LiveKit Cloud).
+  auth-proxy-docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: docker-build
+        run: docker build -t translatorrep-authproxy:ci infra/auth-proxy
