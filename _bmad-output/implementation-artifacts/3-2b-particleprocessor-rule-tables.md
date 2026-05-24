@@ -23,8 +23,8 @@ so that the on-device translation pipeline can preserve cultural-pragmatic conte
 **When** this story's phases land cumulatively,
 **Then:**
 
-1. **AC-1 (TQ-1: 14 Indonesian discourse particles fully implemented):** All 14 `ParticleRule` entries registered in `ParticleRules.kt` using the `sentenceFinalParticle` (or analogous) helper. Phase 1 landed `loh + kan + sih + dong + deh` = **5 of 14 done; 9 to go** (`kok`, `ya`, `lah`, `kah`, `nih`, `tuh`, `mah`, `juga`, `also`).
-2. **AC-2 (Per-rule ≥3 golden-file fixtures):** Every TQ-1 rule has ≥3 fixtures under `shared/particle-rules-fixtures/particles/<name>/case_NNN/`. Phase 1 covered: `loh` (3 from Story 3.2), `kan` (3), `sih` (3), `dong` (3), `deh` (3) = **15 of 42 done; 27 to go**.
+1. **AC-1 (TQ-1: 14 Indonesian discourse particles fully implemented):** All 14 `ParticleRule` entries registered. Phase 1 landed `loh + kan + sih + dong + deh`; **Phase 2 landed `kok + ya + lah`** = **8 of 14 done; 6 to go** (`kah`, `nih`, `tuh`, `mah`, `juga`, `also`). The 6 remaining all need DIFFERENT shape from the `sentenceFinalParticle` helper — Phase 3 with explicit per-particle design notes.
+2. **AC-2 (Per-rule ≥3 golden-file fixtures):** Phase 1 covered `loh + kan + sih + dong + deh` (15 fixtures). **Phase 2 added `kok + ya + lah` (9 fixtures)** = **24 of 42 done; 18 to go**.
 3. **AC-3 (TQ-8: ≥20 Gen-Z slang items):** `GenZSlang.kt` populated; ≥20 slang items with their target equivalents + ≥3 fixtures each. **0 of 20 done.**
 4. **AC-4 (TQ-4: ≥12 Sundanese lexical insertions):** `SundaneseInsertions.kt` populated as a side-channel processor (renders `RenderMode.SUNDANESE_PLACEHOLDER` rather than injecting an equivalent). **0 of 12 done.**
 5. **AC-5 (TQ-5: partner honorifics + strip rules):** `HonorificStripping.kt` implements detect + strip/preserve per intimate-vs-formal register decisions from DR §6. **Not started.**
@@ -47,25 +47,31 @@ so that the on-device translation pipeline can preserve cultural-pragmatic conte
 - [x] **Write 12 new fixtures.** 3 cases each for kan, sih, dong, deh — all with explicit `VERIFY WITH GIRLFRIEND` notes in metadata.json. Test count: 12 → 12 (still 1 test method, now running 15 fixture cases internally).
 - [x] **Local validation.** `./gradlew :app:detekt :app:testDebugUnitTest` 16s warm-cache; 0 detekt smells; all 12 unit-test methods pass (1 fixture method × 15 cases internally).
 
-### Phase 2 — TQ-1 completion: remaining 9 particles (future PR)
+### Phase 2 — TQ-1 sentence-final remainder: kok + ya + lah (this PR, 2026-05-24)
 
-- [ ] **`kok`** (mild surprise): probably `sentenceFinalParticle("kok", ", how come?")` — but kok has many uses (sentence-initial "kok, ...", mid-sentence emphasis). May need a separate helper for kok's polysemy. Verify shape with girlfriend before implementation.
-- [ ] **`ya`** (confirmation): `sentenceFinalParticle("ya", ", yeah?")` — careful, "ya" also means "yes" as a standalone word + appears in mid-sentence as filler. Pattern matching must be precise.
-- [ ] **`lah`** (emphasis): `sentenceFinalParticle("lah", ", indeed")` or `, of course`. Register varies wildly.
-- [ ] **`kah`** (formal question marker): special case — typically DROP in target (English doesn't need a marker for questions; word order does the work). Helper variant: `sentenceFinalParticleDropInTarget("kah")`.
-- [ ] **`nih`** (proximal "this here"): different pattern — sentence-initial or post-noun, not sentence-final. Will need a `proximalDeictic` helper or hand-rolled rule.
-- [ ] **`tuh`** (distal "that there"): mirror of nih; same pattern variation.
-- [ ] **`mah`** (concession): mid-sentence "as for X", different position. Hand-roll likely.
-- [ ] **`juga`** (also): "saya juga" (me too), "dia juga datang" (they came too) — position varies. Mid-sentence detect + position-aware inject.
-- [ ] **`also`** (Indonesian loanword): same as juga; could share rule entry or duplicate.
+- [x] **`kok`** (sentence-final defensive clarification): `sentenceFinalParticle("kok", ", honestly")`. Scoped to the sentence-final use only; the polysemous sentence-INITIAL use ("Kok kamu telat?" = "How come you're late?") is deferred to Phase 3 with a separate rule design — that's why the original Phase-2-was-9-particles plan got split into Phase 2 (3 sentence-final particles) + Phase 3 (6 particles with different shapes).
+- [x] **`ya`** (sentence-final confirmation tag): `sentenceFinalParticle("ya", ", yeah?")`. Disambiguated from kan by register: kan = presupposed-knowledge check ("right?"); ya = comprehension/instruction soft-confirm ("yeah?"). The standalone "Ya" / "yes" word doesn't trigger the rule because the regex requires preceding whitespace.
+- [x] **`lah`** (sentence-final emphasis): `sentenceFinalParticle("lah", ", obviously")`. "Duh" is more accurate but reads flippant in some registers; "obviously" is the safer mid-register choice.
+- [x] **9 new fixtures.** 3 per particle (kok/ya/lah). All with VERIFY WITH GIRLFRIEND notes.
+- [x] **Test infrastructure unchanged.** Generalized fixture test auto-picked up the 3 new dirs — delivers the "zero test changes" promise from Phase 1.
+- [x] **Local validation.** 10s warm-cache; 0 detekt smells; 12 unit-test methods pass; 1 fixture method now iterates 24 cases (8 particles × 3 fixtures).
 
-### Phase 3 — TQ-8 Gen-Z slang dictionary (future PR)
+### Phase 3 — 6 remaining TQ-1 particles requiring new helpers (future PR)
+
+- [ ] **`kah`** (formal question SUFFIX): not a sentence-final particle — a suffix on formal question words (`apakah`, `siapakah`, `manakah`, `bilakah`, `berapakah`, `kapankah`, `mengapakah`, `bagaimanakah`). Needs closed-list detection + suffix-strip + NULL target (English doesn't need a question particle; word order + `?` does the work). Helper: `formalQuestionSuffix`.
+- [ ] **`nih`** (proximal deictic): sentence-INITIAL or post-noun position. Needs a `proximalDeictic` helper.
+- [ ] **`tuh`** (distal deictic): mirror of nih.
+- [ ] **`mah`** (mid-sentence concessive "as for X"): position-aware detect, hand-rolled rule likely.
+- [ ] **`juga`** (mid-sentence "also"): position varies ("saya juga" / "dia juga datang"). Mid-sentence detect + position-aware inject.
+- [ ] **`also`** (Indonesian loanword): duplicates juga semantics; could share rule entry or alias.
+
+### Phase 4 — TQ-8 Gen-Z slang dictionary (future PR; was Phase 3, renumbered after the Phase 2 → 2+3 split)
 
 - [ ] Populate `GenZSlang.kt` with ≥20 contemporary slang items + their target equivalents. Examples: `gabut` (bored), `mager` (lazy), `cuy` (mate/dude), `bestie`, `gass` (let's go), `santuy` (chill), `mantap` (awesome), `auto` (automatically), `wkwkwk` (haha), `sotoy` (know-it-all), `kepo` (nosy), `gws` (get well soon), `btw`, `omg`, `pengen` (want), `bgt` (very), `udh` (already), `gak` (no/not), `nyariin` (looking for), `lemes` (weak/tired).
 - [ ] ≥3 fixtures per slang item. Position-aware inject (slang substitutes the source token, doesn't append at end).
 - [ ] Defer-decision: Phase 3 might warrant its own helper `wordSubstitutionRule(sourceToken, targetEquivalent)` since the substitution semantics differ from sentence-final discourse particles.
 
-### Phase 4 — TQ-3/4/5/6/7 categories (future PRs)
+### Phase 5 — TQ-3/4/5/6/7 categories (future PRs; was Phase 4, renumbered)
 
 - [ ] **TQ-3 gender-neutral `dia → they` rule.** Verify integration with existing rules — `dia datang besok loh` (loh/case_003) already hand-codes the gender-neutral choice in the expected_target; the new rule should make that automatic.
 - [ ] **TQ-4 Sundanese spans:** side-channel processor in `SundaneseInsertions.kt`; emits `RenderMode.SUNDANESE_PLACEHOLDER` rather than equivalent injection. Different `PostProcessed` shape consumer.
@@ -73,7 +79,7 @@ so that the on-device translation pipeline can preserve cultural-pragmatic conte
 - [ ] **TQ-6 religious verbatim:** `ReligiousExpressions.kt` — dictionary lookup, marker substitution returns same token in target (no translation).
 - [ ] **TQ-7 indirect refusals:** `IndirectRefusals.kt` — pragmatic-marker injection.
 
-### Phase 5 — Done criteria + 3.2b → review
+### Phase 6 — Done criteria + 3.2b → review (was Phase 5, renumbered)
 
 - [ ] All AC-1 through AC-8 ✅.
 - [ ] Story 3.2b flips to `review`; CR pass; flip to `done`.
@@ -184,3 +190,4 @@ claude-opus-4-7[1m] (autonomous session 2026-05-24, post-PR #8-merge)
 ### Change Log
 
 - 2026-05-24 — Story 3.2b created (status `in-progress`). Phase 1 landed kan + sih + dong + deh (4 of 13 remaining TQ-1 particles); helper-extracted ParticleRules; generalized fixture test; multi-punct cleanup. Phases 2-5 add the remaining TQ-1 particles + TQ-3/4/5/6/7/8 categories incrementally.
+- 2026-05-24 (later) — **Phase 2** landed kok + ya + lah (3 more sentence-final particles). TQ-1 progress: 8 of 14 done. The remaining 6 (kah/nih/tuh/mah/juga/also) all need NEW helpers because they don't fit the sentence-final pattern — split out into Phase 3 with explicit design notes (suffix-detect for kah; deictic-position for nih/tuh; mid-sentence position-aware for mah/juga/also). Phase numbers 3–5 renumbered to 4–6 to accommodate the new Phase 3. Test infrastructure unchanged — the generalized fixture test auto-picked up the 3 new fixture dirs without any code changes (delivers the "phase 2+ needs zero test changes" promise from Phase 1).

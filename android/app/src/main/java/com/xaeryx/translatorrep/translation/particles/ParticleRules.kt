@@ -42,16 +42,19 @@ internal object ParticleRules {
         sentenceFinalParticle(name = "sih", englishEquivalent = ", though"),
         sentenceFinalParticle(name = "dong", englishEquivalent = ", please"),
         sentenceFinalParticle(name = "deh", englishEquivalent = ", then"),
+        // Phase 2 additions (2026-05-24):
+        sentenceFinalParticle(name = "kok", englishEquivalent = ", honestly"),
+        sentenceFinalParticle(name = "ya", englishEquivalent = ", yeah?"),
+        sentenceFinalParticle(name = "lah", englishEquivalent = ", obviously"),
 
-        // TODO Story 3.2b Phase 2: kok (mild surprise — "how come" / "huh?")
-        // TODO Story 3.2b Phase 2: ya (confirmation tag — "right?" / "yeah?")
-        // TODO Story 3.2b Phase 2: lah (emphasis — "indeed" / "of course")
-        // TODO Story 3.2b Phase 2: kah (formal question marker — usually drop in target, no equivalent inject)
-        // TODO Story 3.2b Phase 2: nih (proximal "this here" — sentence-initial common, different pattern)
-        // TODO Story 3.2b Phase 2: tuh (distal "that there" — sentence-initial common, different pattern)
-        // TODO Story 3.2b Phase 2: mah (concession / "as for" — mid-sentence position, different detect)
-        // TODO Story 3.2b Phase 2: juga (also — mid-sentence "as well")
-        // TODO Story 3.2b Phase 2: also (Indonesian loanword; same semantics as juga)
+        // TODO Story 3.2b Phase 3 — these need DIFFERENT shape from sentence-final helper:
+        //   kah  — formal-question SUFFIX on words ("apakah"/"siapakah"/etc); strip in target,
+        //          no equivalent inject. Detection is on a closed set of -kah formal words.
+        //   nih  — proximal deictic, sentence-INITIAL or post-noun position, not sentence-final.
+        //   tuh  — distal deictic, mirror of nih.
+        //   mah  — mid-sentence concessive ("as for X, ..."), position-aware.
+        //   juga — mid-sentence "also", position-variable.
+        //   also — Indonesian loanword duplicating juga semantics; could share rule or alias.
     )
 
     /**

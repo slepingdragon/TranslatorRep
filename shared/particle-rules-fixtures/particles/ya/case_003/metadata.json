@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["ya"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "intention-tag", "wait-statement"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (ya as intention-confirm tag)",
+  "notes": "Sentence-final 'ya' announcing a personal action and inviting acknowledgment — 'I'll do X, ok with you?'. The English 'yeah?' captures the soft-check register. NMT will likely render 'aku tunggu' as 'I'll wait' (future-ish from context); idempotency depends on that. VERIFY WITH GIRLFRIEND: 'alright?' might be too declarative; 'mm?' or 'OK?' could be more natural depending on dialect."
+}
