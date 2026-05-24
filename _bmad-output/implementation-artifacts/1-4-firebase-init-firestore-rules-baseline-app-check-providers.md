@@ -40,13 +40,15 @@ so that the app can sign users in anonymously, store metadata-only docs against 
 
 These tasks are NOT for an AI agent. Bania completes them in a browser per [`docs/runbooks/firebase-setup-android.md`](../../docs/runbooks/firebase-setup-android.md). The runbook is the source of truth; bullets here are a checklist mirror.
 
+**Updated 2026-05-24:** Bania confirmed Google Play Console + Apple Developer accounts already exist. Net effect on this Phase: §0.7 (Play Integrity) is now required, not optional. Internal Testing distribution (the QR/install workflow) moves from Story 1-4c "Firebase App Distribution" → Story 1-4c "Google Play Internal Testing" (Play Console flow is cleaner for native Android than Firebase App Distribution; uses real Play Store install). Internal Testing setup is NOT part of Story 1.4 Phase 0 — it depends on Story 1.6d (signing config) + happens in Story 1.4c.
+
 - [ ] **0.1** Sign in to [console.firebase.google.com](https://console.firebase.google.com) with the Google account that will own the project.
 - [ ] **0.2** Create a new Firebase project named `TranslatorRep` (Analytics optional — recommend OFF for a privacy-first app).
 - [ ] **0.3** Add an Android app to the project: package name `com.xaeryx.translatorrep`; nickname `TranslatorRep Android`; optionally provide SHA-1 from debug keystore (`./gradlew :app:signingReport` or via Android Studio).
 - [ ] **0.4** Download `google-services.json` from the Firebase console → place at `android/app/google-services.json`. Verify it's gitignored (`git status` should NOT show it).
 - [ ] **0.5** Enable **Authentication → Sign-in method → Anonymous → Enable**.
 - [ ] **0.6** Enable **Firestore Database → Create database → start in production mode** (we'll deploy our own rules). Pick a region close to Indonesia (asia-southeast2 = Jakarta if available, else asia-southeast1 = Singapore).
-- [ ] **0.7** Enable **App Check** for the Android app. Register **Play Integrity** as the attestation provider — requires Google Play Console + Play Integrity API enabled in Google Cloud Console for the linked project. Runbook §5 has the full walkthrough including the $25 Play Console fee + project linking.
+- [ ] **0.7** Enable **App Check** for the Android app. Register **Play Integrity** as the attestation provider — requires Google Play Console + Play Integrity API enabled in Google Cloud Console for the linked project. Runbook §5 has the full walkthrough. **Updated 2026-05-24:** Bania confirmed Google Play Console dev account already exists, so no $25 fee gate. This step is required (no longer optional/deferrable per the previous "skip §5 if you don't want $25" bailout).
 - [ ] **0.8** (Optional) Generate a Debug App Check token via the Firebase console for use with `DebugAppCheckProviderFactory` during dev — saves needing real Play Integrity attestation in debug builds. Store the token in `local.properties` as `firebaseAppCheckDebugToken=...` (gitignored).
 - [ ] **0.9** Install Firebase CLI globally: `npm install -g firebase-tools`; authenticate via `firebase login`; link the local `firebase/` directory to the new project via `cd firebase && firebase use --add <project-id>`.
 
@@ -197,3 +199,4 @@ _(filled in at implementation time)_
 ### Change Log
 
 - 2026-05-23 — Story 1.4 file created (Android-only scope; iOS deferred to Story 1-4b, Firebase App Distribution deferred to Story 1-4c). Firebase project setup is gated on Bania completing Phase 0 (manual console clicks per `docs/runbooks/firebase-setup-android.md`). This PR scaffolds: `firebase/` directory + Firestore rules + App Check Android provider notes + `FirebaseBootstrap.kt` skeleton (compiles, not yet called from Application.kt). Activation happens in a follow-up dev session after Bania's manual Firebase setup lands.
+- 2026-05-24 — Rescope: Bania confirmed Google Play Console + Apple Dev accounts exist. Story 1-4c "Firebase App Distribution" renamed to "Google Play Internal Testing" (better native-Android distribution + validates Play Integrity end-to-end). Phase 0.7 (Play Integrity) flat-required (no $25 bailout). No code changes; story-spec and runbook updates only.
