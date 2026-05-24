@@ -11,13 +11,15 @@ const envSchema = z.object({
     NODE_ENV: z.enum(["production", "development", "test"]).default("development"),
     PORT: z.coerce.number().int().positive().default(3000),
 
-    // LiveKit Server SDK credentials — used to sign minted JWTs. Must match the
-    // `keys:` block in infra/livekit.yaml.
+    // LiveKit Cloud API key + secret — used to sign minted JWTs. From the LiveKit
+    // Cloud project (Project → Settings → Keys). Set as Render secret env vars.
     LIVEKIT_API_KEY: z.string().min(8, "LIVEKIT_API_KEY too short (LiveKit requires ≥8 chars)"),
     LIVEKIT_API_SECRET: z.string().min(16, "LIVEKIT_API_SECRET too short (≥16 chars recommended)"),
 
-    // Public URL the mobile client connects to. Embedded in the token response.
-    LIVEKIT_WS_URL: z.string().url().default("wss://sfu.xaeryx.com"),
+    // LiveKit Cloud project WebSocket URL (wss://<project>.livekit.cloud) the mobile
+    // client connects to. Embedded in the token response. Required (no default — set
+    // per environment; Render injects it). See docs/runbooks/livekit-cloud-render-setup.md.
+    LIVEKIT_WS_URL: z.string().url(),
 
     // Firebase Admin SDK setup. PROJECT_ID is used for verifying ID tokens
     // (issued by the same project) and for App Check JWKS path resolution.
