@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["bismillah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-6", "religious-expression", "verbatim-preservation", "arabic-origin", "trying-something-new"],
+  "dr_section_ref": "architecture §11 + DR §6 (religious expressions preserved verbatim)",
+  "notes": "'mau coba' = 'want to try' (intent + verb). Casual self-encouragement using bismillah — 'here goes' kind of register. VERIFY WITH GIRLFRIEND: whether 'let me try' or 'here goes' is the more natural English for this self-pep-talk usage; this is one of the most common modern colloquial uses of bismillah."
+}

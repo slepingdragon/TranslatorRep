@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["alhamdulillah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-6", "religious-expression", "verbatim-preservation", "arabic-origin", "gratitude"],
+  "dr_section_ref": "architecture §11 + DR §6 (religious expressions preserved verbatim)",
+  "notes": "'alhamdulillah' = 'praise be to God / thank God', expression of gratitude or relief. Verbatim preservation chosen because the receiving partner is expected to recognize this common Indonesian-Muslim convention; literal 'thank God' flattens the religious-cultural register. No common multi-word variant (canonical Indonesian spelling is one-word). VERIFY WITH GIRLFRIEND: whether 'thank God' or 'thanks be to God' is sometimes preferred in fully secular conversational contexts."
+}

@@ -1,10 +1,10 @@
 {
   "source_lang": "id-ID",
   "target_lang": "en-US",
-  "expected_particles": ["also"],
+  "expected_particles": ["also", "dia"],
   "expected_render_mode": "default",
   "expected_translation_status": "ok",
-  "tags": ["TQ-1", "loanword", "code-switching", "rare-usage", "gender-neutral-dia"],
-  "dr_section_ref": "DR §1 — Indonesian discourse particles (also as juga-alias)",
-  "notes": "Code-switched 'also' in mid-sentence position, semantically identical to 'juga'. Same as juga/case_002 but with 'also' substituted. VERIFY WITH GIRLFRIEND: same rare-usage caveat as case_001 — if this construction is never used, the rule can be deleted."
+  "tags": ["TQ-1", "TQ-3", "loanword", "code-switching", "rare-usage", "gender-neutral-dia"],
+  "dr_section_ref": "DR §1 (also as juga-alias) + DR §6.3 (gender-neutral dia → they)",
+  "notes": "Two-rule fixture (post Story 3.2b Phase 4): (1) TQ-1 'also' loanword mid-sentence; (2) TQ-3 gender-neutral 'dia → they'. Code-switched 'also' is semantically identical to 'juga' — same rare-usage caveat as case_001 (if this construction is never used, the rule can be deleted). VERIFY WITH GIRLFRIEND: code-switching frequency in your conversational register + whether 'They came too' (current expected_target) or 'They also came' is more natural."
 }

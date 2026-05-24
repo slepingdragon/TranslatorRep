@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["masyaallah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-6", "religious-expression", "verbatim-preservation", "arabic-origin", "admiration-no-evil-eye"],
+  "dr_section_ref": "architecture §11 + DR §6 (religious expressions preserved verbatim)",
+  "notes": "'masyaallah' = 'what God has willed', expresses admiration with implicit warding-against-evil-eye. Common when praising someone's work, child, possession. Multi-word variant 'masya Allah' (two words) + Arabic-English transliteration 'mashallah' deferred. VERIFY WITH GIRLFRIEND: which spelling is more common in your circles (masyaallah / masya Allah / mashallah)."
+}

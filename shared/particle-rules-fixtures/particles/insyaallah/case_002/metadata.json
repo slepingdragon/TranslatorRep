@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["insyaallah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-6", "religious-expression", "verbatim-preservation", "arabic-origin", "appointment-soft-confirm"],
+  "dr_section_ref": "architecture §11 + DR §6 (religious expressions preserved verbatim)",
+  "notes": "'insyaallah' on appointment confirmation — non-committal soft-yes that hedges against unforeseen events. 'jam tujuh' = 7 o'clock (Indonesian uses jam + hour). VERIFY WITH GIRLFRIEND: whether 'insyaallah' in this context reads as a real maybe (might not show) vs. a polite yes (will show unless something catastrophic happens) for your relationship register."
+}

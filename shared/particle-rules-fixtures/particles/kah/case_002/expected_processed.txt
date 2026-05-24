@@ -1,1 +1,1 @@
-Siapa[PARTICLE:kah] dia?
+Siapa[PARTICLE:kah] [PARTICLE:dia]?

@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["dia"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-3", "gender-neutral-pronoun", "singular-they-default", "subject-position"],
+  "dr_section_ref": "architecture §11 + DR §6.3 (gender-neutral dia → they)",
+  "notes": "Subject-position 'dia' → singular 'they' (gender-unspecified default). VERIFY WITH GIRLFRIEND: in real conversation, do you and partner typically already know which person 'dia' refers to (so 'he'/'she' might be more natural after disambiguation)? The conservative singular-they default avoids gendering when context isn't established. Follow-up: a future story may add a 'pinned gender' setting per partner contact when the speaker explicitly tells the app the referent's pronouns."
+}

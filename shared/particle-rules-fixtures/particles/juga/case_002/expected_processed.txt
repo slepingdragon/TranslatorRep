@@ -1,1 +1,1 @@
-Dia [PARTICLE:juga] datang
+[PARTICLE:dia] [PARTICLE:juga] datang

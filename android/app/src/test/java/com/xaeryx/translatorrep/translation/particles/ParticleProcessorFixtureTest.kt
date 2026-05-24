@@ -79,10 +79,15 @@ class ParticleProcessorFixtureTest {
             expectedProcessed,
             processed.text,
         )
-        assertEquals(
-            "[${ruleName}/${caseDir.name}] preProcess detected particles mismatch",
-            listOf(ruleName),
-            processed.particles,
+        // The fixture's own rule must always be detected. Multi-particle fixtures
+        // (e.g., loh/case_003's "Dia datang besok loh" — both `dia` and `loh`) are
+        // valid as of Story 3.2b Phase 4; the exact-equality assertion was relaxed
+        // to `contains`. The full per-fixture particle set is still strictly
+        // enforced by the expected_processed.txt equality check above — that
+        // catches missing/wrong tags more precisely than a name-list equality.
+        assertTrue(
+            "[${ruleName}/${caseDir.name}] preProcess.particles missing expected '$ruleName' (got ${processed.particles})",
+            processed.particles.contains(ruleName),
         )
 
         // Pass 2: postProcess idempotency — passing expected_target back in

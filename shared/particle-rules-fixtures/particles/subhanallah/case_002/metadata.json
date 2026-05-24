@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["subhanallah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-6", "religious-expression", "verbatim-preservation", "arabic-origin", "marveling-at-growth"],
+  "dr_section_ref": "architecture §11 + DR §6 (religious expressions preserved verbatim)",
+  "notes": "Marveling at a child's growth — common family-context use. Note: subhanallah on a child can be confused with masyaallah, which is the more conventional 'admiration without evil eye' expression for human attributes; subhanallah is more commonly for natural phenomena. VERIFY WITH GIRLFRIEND: whether this would actually be 'masyaallah' in conversational practice (case may be wrong fit for subhanallah — flag for fixture rewrite)."
+}

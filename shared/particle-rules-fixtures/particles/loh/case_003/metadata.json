@@ -1,10 +1,10 @@
 {
   "source_lang": "id-ID",
   "target_lang": "en-US",
-  "expected_particles": ["loh"],
+  "expected_particles": ["loh", "dia"],
   "expected_render_mode": "default",
   "expected_translation_status": "ok",
   "tags": ["TQ-1", "TQ-3", "information-sharing", "gender-neutral-dia"],
   "dr_section_ref": "DR §1 (loh particle) + DR §6.3 (gender-neutral 'dia → they')",
-  "notes": "Two-rule fixture: (1) TQ-1 loh sentence-final discourse particle; (2) TQ-3 gender-neutral 'dia → they' default (Indonesian 'dia' is gender-unspecified; English defaults to singular-they rather than guessing he/she). 'loh' here is information-sharing — the speaker is making sure the listener has the date/timing fact. English 'you know' preserves the conversational nudge. VERIFY WITH GIRLFRIEND: in case the listener already knew, 'loh' can also read as gentle correction ('actually, they're coming tomorrow') — Story 3.2b may add a sub-rule for that variant. Sundanese-context note: 'dia' has no Sundanese equivalent register split (Sundanese uses 'manehna' which is gendered), so this fixture stays Indonesian-source."
+  "notes": "Two-rule fixture (post Story 3.2b Phase 4 — TQ-3 'dia → they' is now an actual code rule, not just a metadata observation): (1) TQ-1 loh sentence-final discourse particle; (2) TQ-3 gender-neutral 'dia → they' default. 'loh' here is information-sharing — the speaker is making sure the listener has the date/timing fact. English 'you know' preserves the conversational nudge. VERIFY WITH GIRLFRIEND: in case the listener already knew, 'loh' can also read as gentle correction ('actually, they're coming tomorrow') — Story 3.2b may add a sub-rule for that variant. Sundanese-context note: 'dia' has no Sundanese equivalent register split (Sundanese uses 'manehna' which is gendered), so this fixture stays Indonesian-source."
 }

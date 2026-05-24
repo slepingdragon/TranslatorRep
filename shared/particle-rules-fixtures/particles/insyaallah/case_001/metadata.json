@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["insyaallah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-6", "religious-expression", "verbatim-preservation", "arabic-origin", "future-intent-softener"],
+  "dr_section_ref": "architecture §11 + DR §6 (religious expressions preserved verbatim)",
+  "notes": "'insyaallah' = 'God willing', softens future commitments. Verbatim preservation chosen because literal 'God willing' in English shifts register too far toward religious-formal; the Indonesian-Muslim social-context signal is that the speaker is being polite/non-committal rather than literally invoking deity. Multi-word variant 'insya Allah' (two words) and English transliteration 'inshallah' deferred — v1 chose Indonesian single-word for regex simplicity. VERIFY WITH GIRLFRIEND: which spelling is most common in your messages (insyaallah / insya Allah / inshallah)."
+}

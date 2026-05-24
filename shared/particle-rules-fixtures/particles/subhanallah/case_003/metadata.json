@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["subhanallah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-6", "religious-expression", "verbatim-preservation", "arabic-origin", "aesthetic-awe"],
+  "dr_section_ref": "architecture §11 + DR §6 (religious expressions preserved verbatim)",
+  "notes": "'cantik banget' = 'so/very beautiful'. 'banget' is informal intensifier — register matters. VERIFY WITH GIRLFRIEND: same masyaallah-vs-subhanallah confusion as case_002; this might more naturally be masyaallah in conversational use. If so, fold this into the masyaallah fixture set in a follow-up."
+}

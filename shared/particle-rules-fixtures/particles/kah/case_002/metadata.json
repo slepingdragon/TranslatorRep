@@ -1,10 +1,10 @@
 {
   "source_lang": "id-ID",
   "target_lang": "en-US",
-  "expected_particles": ["kah"],
+  "expected_particles": ["kah", "dia"],
   "expected_render_mode": "default",
   "expected_translation_status": "ok",
   "tags": ["TQ-1", "TQ-3", "formal-question-suffix", "null-target", "gender-neutral-dia"],
   "dr_section_ref": "DR §1 (kah) + DR §6.3 (gender-neutral dia → they)",
-  "notes": "Two-rule fixture: (1) kah on 'siapa' → 'siapakah' (formal who?); (2) dia → they (gender-neutral). English 'Who are they?' uses singular 'they' since Indonesian dia is gender-unspecified. VERIFY WITH GIRLFRIEND: 'Who is that?' might be more natural if the referent is known visually; this fixture assumes the speaker is asking about an unknown person."
+  "notes": "Two-rule fixture: (1) TQ-1 'kah' suffix on 'siapa' → 'siapakah' (formal who?), null-target — English doesn't need a question marker, word order + '?' do the work; (2) TQ-3 gender-neutral 'dia → they'. English 'Who are they?' uses singular 'they' since Indonesian dia is gender-unspecified. VERIFY WITH GIRLFRIEND: 'Who is that?' might be more natural if the referent is visually known; this fixture assumes the speaker is asking about an unknown person."
 }
