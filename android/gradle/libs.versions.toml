@@ -59,6 +59,11 @@ ulid = "1.3.0"
 # detekt — static analysis + custom ForbiddenImport rule for SafeLog enforcement (architecture §14)
 detekt = "1.23.7"
 
+# Google Tink — vetted crypto. Used for X25519 identity keys (Story 1.12, ADR-A2) via
+# com.google.crypto.tink.subtle.X25519 (raw 32-byte keys; matches iOS CryptoKit Curve25519).
+# Also provides computeSharedSecret for the Epic-5 per-call ECDH.
+tink = "1.15.0"
+
 [libraries]
 # Core / Activity / Lifecycle
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -106,6 +111,10 @@ androidx-security-crypto = { group = "androidx.security", name = "security-crypt
 
 # ULID — wrapped behind ids/UlidGenerator.kt (architecture §4 + Story 1.5)
 ulid-kotlin = { group = "com.aallam.ulid", name = "ulid-kotlin", version.ref = "ulid" }
+
+# Google Tink (Android) — X25519 identity keys (Story 1.12) + Epic-5 ECDH. Wrapped behind
+# e2ee/X25519Identity.kt; callers never touch Tink directly.
+tink-android = { group = "com.google.crypto.tink", name = "tink-android", version.ref = "tink" }
 
 # Testing
 junit = { group = "junit", name = "junit", version = "4.13.2" }

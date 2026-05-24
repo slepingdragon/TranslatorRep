@@ -3,6 +3,9 @@ package com.xaeryx.translatorrep
 import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.room.Room
+import com.xaeryx.translatorrep.e2ee.IdentityFirestoreRepository
+import com.xaeryx.translatorrep.e2ee.IdentityRepository
+import com.xaeryx.translatorrep.e2ee.SecureIdentityKeyStore
 import com.xaeryx.translatorrep.firebase.FirebaseBootstrap
 import com.xaeryx.translatorrep.pairing.AnonymousAuthRepository
 import com.xaeryx.translatorrep.pairing.FirebaseAuthGatewayImpl
@@ -10,6 +13,7 @@ import com.xaeryx.translatorrep.pairing.PairingFirestoreRepository
 import com.xaeryx.translatorrep.pairing.PairingStatusRepository
 import com.xaeryx.translatorrep.pairing.local.PairingDatabase
 import com.xaeryx.translatorrep.pairing.local.RoomPairingMirror
+import com.xaeryx.translatorrep.secure.SecureStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -57,6 +61,15 @@ class TranslatorRepApplication : Application() {
         PairingStatusRepository(
             directory = PairingFirestoreRepository(),
             mirror = RoomPairingMirror(pairingDatabase.pairedPartnerDao()),
+            scope = appScope,
+        )
+    }
+
+    /** X25519 identity keypair generate-once + publish (Story 1.12, ADR-A2). */
+    val identityRepository: IdentityRepository by lazy {
+        IdentityRepository(
+            keyStore = SecureIdentityKeyStore(SecureStorage(this)),
+            publisher = IdentityFirestoreRepository(),
             scope = appScope,
         )
     }

@@ -158,6 +158,10 @@ dependencies {
     // Wrapped behind ids/UlidGenerator.kt; callers never touch the library directly.
     implementation(libs.ulid.kotlin)
 
+    // Google Tink — vetted crypto for X25519 identity keys (Story 1.12, ADR-A2) + Epic-5
+    // ECDH. Wrapped behind e2ee/X25519Identity.kt.
+    implementation(libs.tink.android)
+
     // Firebase — BOM-managed; Story 1.4 wires actual usage
     implementation(platform(libs.firebase.bom))
     implementation(libs.bundles.firebase)
