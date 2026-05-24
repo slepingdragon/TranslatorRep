@@ -34,4 +34,10 @@ interface PairDirectory {
      * discovery; the initiator already did it in Story 1.10). Idempotent merge.
      */
     suspend fun ensureOwnPairId(myUid: String, pairId: String)
+
+    /** Delete `/pairs/{pairId}` (Story 1.13 unpair). Caller must be a member (rules). */
+    suspend fun deletePair(pairId: String)
+
+    /** Remove the `pairId` field from the caller's OWN `/users/{uid}` doc (Story 1.13 unpair). */
+    suspend fun clearOwnPairId(myUid: String)
 }
