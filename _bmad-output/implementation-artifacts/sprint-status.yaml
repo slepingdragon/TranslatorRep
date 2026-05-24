@@ -37,7 +37,7 @@
 # docs/runbooks/ios-setup-on-mac.md for the iOS handoff.
 
 generated: 2026-05-23
-last_updated: 2026-05-24T21:00  # Story 1.3 Phase 1a infra/ config scaffolding landed (docker-compose, livekit.yaml, Caddyfile, .env.example, deploy.sh, README, auth-proxy/README placeholder). Phase 1b (auth-proxy TypeScript) deferred to fresh session. 1.6d merged (signing + assembleRelease + UI test scaffold). Today also: 1.3 Phase 0 runbook scaffolded, 1.4 Phase 1 Firebase wiring landed, 3.2b Phase 4 TQ-3+TQ-6 landed. Bania still finishing Oracle Phase 0 async.
+last_updated: 2026-05-24T22:30  # Story 1.3 Phase 1b auth-proxy TypeScript IMPLEMENTED autonomously while Bania did Oracle Phase 0: 10 source files + 4 unit test files (23 tests green) + Dockerfile + package-lock.json. POST /v1/token full chain (parse → auth → rate-limit → paired → mint). GET /v1/healthz. Local validate: typecheck + test + build all clean. Story 1.3 stays ready-for-dev — Phase 2 (deploy to VM + smoke test) happens once Bania's Oracle VM is up. Also today: 1.6d merged, 1.4 Phase 1 Firebase wiring landed, 3.2b Phase 4 TQ-3+TQ-6 landed, 1.3 Phase 0 runbook + Phase 1a infra config landed.
 project: TranslatorRep
 project_key: NOKEY
 tracking_system: file-system
@@ -48,7 +48,7 @@ development_status:
   epic-1: in-progress
   1-1-android-project-scaffold: done
   1-2-ios-project-scaffold: backlog
-  1-3-oracle-vm-livekit-docker-compose-stack-domain: ready-for-dev  # Phase 0 runbook + Phase 1a infra/ config scaffolding landed 2026-05-24 (docker-compose with 4 services + host networking, livekit.yaml, Caddyfile, .env.example, deploy.sh with pre-checks, README, auth-proxy/README placeholder). Phase 1b (auth-proxy TypeScript implementation per shared/auth-proxy-api.md) deferred to fresh session. Phase 2 (deploy + verify) after Phase 1b. Bania doing Phase 0 (Oracle Cloud signup + VM + DNS + SSH + Docker) async.
+  1-3-oracle-vm-livekit-docker-compose-stack-domain: ready-for-dev  # Phase 0 runbook + Phase 1a infra config + Phase 1b auth-proxy TypeScript ALL landed 2026-05-24. Phase 1b (Express+TS+Firebase Admin SDK+LiveKit Server SDK): 10 src files + 4 test files (23 unit tests green via vitest). POST /v1/token + GET /v1/healthz. Dockerfile multi-stage → distroless. Local typecheck+test+build all clean. Only Phase 2 remaining: Bania completes Phase 0 (Oracle Cloud signup async), then `./infra/deploy.sh` from his laptop + smoke test via `curl /v1/healthz`. Status flips to `review` after Phase 2 verification.
   1-4-firebase-init-firestore-rules-baseline-app-check-providers: review  # Phase 0 done 2026-05-24 (Firebase project translatorrep-8d773; Jakarta Firestore; Play Integrity linked; rules deployed). Phase 1 code wiring landed same day (plugins activated; FirebaseBootstrap.init() called from Application.onCreate; FirebaseSmokeTest.runOnce() implemented; MainActivity intent-extra trigger). Local validate green. Phase 3 device smoke test (Bania, post-merge) remains before done flip.
   1-4b-ios-firebase-init: backlog       # Sequenced after Story 1.2 (Xcode project on Mac) — future iOS Claude session
   1-4c-play-store-internal-testing-android: backlog  # QR/install workflow via real Play Store; deps: Story 1.4 (App Check) + Story 1.6d (signing config). Replaces earlier "firebase-app-distribution" plan — Internal Testing is cleaner for native Android + validates Play Integrity end-to-end. Updated 2026-05-24 once Bania confirmed Play Console account.

@@ -1,0 +1,11 @@
+node_modules
+dist
+test
+*.log
+.env
+.env.*
+README.md
+vitest.config.ts
+.dockerignore
+.gitignore
+Dockerfile
