@@ -343,7 +343,7 @@ Started: 9 stories done (1.1, 1.5, 1.6, 1.7, 1.14a/b/c, 3.2) + 3.2b in-progress 
 | 9 | Audio calling — auth + call placement | 2.2 **DONE** (2026-05-24, CallSession scaffold + Call button), 2.1 (deploy auth-proxy → LiveKit Cloud), 2.3 (place call) | epic-2 **in-progress**; 2.1/2.3 need Brady: LiveKit Cloud account + auth-proxy host |
 | 10 | Audio calling — Android FCM + lifecycle | 2.5, 2.6, 2.7, 2.8 | Session 9 |
 | 11 | Audio calling — finish + taxonomy | 2.9, 2.10, 2.11 | Session 10 |
-| 12 | Translation — interfaces + Android ASR + VAD | 3.3, 3.4, 3.6 | Session 11 |
+| 12 | Translation — interfaces + Android ASR + VAD | 3.3 **DONE** (2026-05-24, provider interfaces + cancellation contract + fakes), 3.4 (Android ASR, needs device), 3.6 (VAD) | epic-3 **in-progress** |
 | 13 | Translation — corpus + model | 3.7, 3.8 | Session 12 |
 | 14 | **⚠️ Validation gate (project's biggest risk)** | 3.9 | Session 13 + **Bania's Story 3.1 real-conversation evidence** |
 | 15 | Translation — decorator + tracing + captions | 3.10, 3.11, 3.12, 3.13 | Session 14 verdict |
