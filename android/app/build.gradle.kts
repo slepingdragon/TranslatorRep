@@ -95,6 +95,14 @@ tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
     }
 }
 
+// Story 3.2 — ParticleProcessor fixture tests load golden files from
+// `/shared/particle-rules-fixtures/` (cross-platform fixture set, repo root).
+// Pass the repo-root path as a system property so the test class can resolve
+// it independently of the Gradle test runner's working directory.
+tasks.withType<Test>().configureEach {
+    systemProperty("repo.root", rootProject.projectDir.parentFile.absolutePath)
+}
+
 dependencies {
     // Compose BOM — single source of truth for Compose artifact versions
     implementation(platform(libs.androidx.compose.bom))

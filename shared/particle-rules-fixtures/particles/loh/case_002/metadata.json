@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["loh"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "mild-assertion", "casual-register"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles",
+  "notes": "Sentence-final 'loh' on a value judgement ('enak banget' = 'really delicious') functions as gentle insistence — the speaker wants the listener to register the strength of their opinion. English 'you know' lands the same conversational register. Validates that the loh rule fires equally on opinion-statement utterances, not just emotional ones (case_001). VERIFY WITH GIRLFRIEND: confirm 'you know' reads naturally in this register — alternative 'really' or 'I'm telling you' might be more native depending on dialect."
+}

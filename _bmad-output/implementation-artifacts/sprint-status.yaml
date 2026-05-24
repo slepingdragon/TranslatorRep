@@ -37,7 +37,7 @@
 # docs/runbooks/ios-setup-on-mac.md for the iOS handoff.
 
 generated: 2026-05-23
-last_updated: 2026-05-24T08:00  # Dev-account rescope — 1-4c renamed to Play Store Internal Testing; Play Integrity flat-required (Bania has Play Console + Apple Dev accounts)
+last_updated: 2026-05-24T09:30  # Story 3.2 (ParticleProcessor + loh rule + harness) landed for review; sub-letters 3-2b + 3-2c queued
 project: TranslatorRep
 project_key: NOKEY
 tracking_system: file-system
@@ -87,7 +87,9 @@ development_status:
   # Epic 3 — One-Direction Translation Pipeline
   epic-3: backlog
   3-1-pre-validation-conversation-with-girlfriend: backlog
-  3-2-particleprocessor-module-golden-file-fixtures: backlog
+  3-2-particleprocessor-module-golden-file-fixtures: review     # Android-only + TQ-1 loh rule + harness landed 2026-05-24
+  3-2b-particleprocessor-rule-tables: backlog                    # Remaining 13 TQ-1 particles + TQ-3/4/5/6/7/8 categories + metadata-driven test parameterization
+  3-2c-particleprocessor-ios-parity: backlog                     # iOS Swift mirror + cross-platform parity assertion (Mac/iOS Claude session)
   3-3-asrprovider-translationprovider-interfaces-symmetric-surface-cancellation-contract: backlog
   3-4-android-on-device-asr-provider: backlog
   3-5-ios-whisper-cpp-on-device-asr-provider: backlog
