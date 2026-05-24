@@ -47,6 +47,24 @@ class PairingStatusRepository(
     }
 
     /**
+     * Unpair (Story 1.13): optimistically flip to [PairingStatus.Unpaired] + clear the local
+     * mirror, then delete `/pairs/{pairId}` and the caller's own `/users.pairId`. Fire-and-
+     * forget on [scope]; the live listener will also observe the deletion and reconcile. The
+     * partner's listener fires independently → their status flips to Unpaired (no notification).
+     */
+    fun unpair(myUid: String, pairId: String) {
+        scope.launch { performUnpair(myUid, pairId) }
+    }
+
+    /** Testable core of [unpair]. Firestore deletes are best-effort (offline-safe). */
+    suspend fun performUnpair(myUid: String, pairId: String) {
+        mirror.clear()
+        _status.value = PairingStatus.Unpaired
+        runCatching { directory.deletePair(pairId) }
+        runCatching { directory.clearOwnPairId(myUid) }
+    }
+
+    /**
      * Fold a `/pairs` snapshot into [PairingStatus] + the local mirror. On a pair: on first
      * discovery, write our own `pairId` (partner-side consistency; best-effort so it can't
      * crash offline), preserve any cached partner name (default "Partner", FR-23), and update

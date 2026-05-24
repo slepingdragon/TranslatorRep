@@ -155,6 +155,14 @@ class PairingFirestoreRepository(
 
     override suspend fun ensureOwnPairId(myUid: String, pairId: String) = setUserPairId(myUid, pairId)
 
+    override suspend fun deletePair(pairId: String) {
+        pairs.document(pairId).delete().await()
+    }
+
+    override suspend fun clearOwnPairId(myUid: String) {
+        users.document(myUid).update(FIELD_PAIR_ID, FieldValue.delete()).await()
+    }
+
     private fun DocumentSnapshot.toRemotePair(): RemotePair? {
         val a = getString(FIELD_MEMBER_A) ?: return null
         val b = getString(FIELD_MEMBER_B) ?: return null

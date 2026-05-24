@@ -64,6 +64,21 @@ class PairingStatusRepositoryTest {
     }
 
     @Test
+    fun `performUnpair clears the mirror, reports Unpaired, deletes the pair and own pairId`() =
+        runBlocking {
+            val directory = FakeDirectory()
+            val mirror = FakeMirror().apply { stored = MirroredPair(PAIR_ID, PARTNER_UID, "Ayu") }
+            val repository = repository(directory, mirror)
+
+            repository.performUnpair(MY_UID, PAIR_ID)
+
+            assertEquals(PairingStatus.Unpaired, repository.status.value)
+            assertNull("mirror cleared on unpair", mirror.stored)
+            assertEquals(listOf(PAIR_ID), directory.deletedPairs)
+            assertEquals(listOf(MY_UID), directory.clearedPairIdFor)
+        }
+
+    @Test
     fun `already-mirrored pair - does not rewrite own pairId and keeps the cached name`() =
         runBlocking {
             val directory = FakeDirectory()
@@ -79,11 +94,15 @@ class PairingStatusRepositoryTest {
     private class FakeDirectory : PairDirectory {
         /** (uid, pairId) for each ensureOwnPairId call. */
         val ensured = mutableListOf<Pair<String, String>>()
+        val deletedPairs = mutableListOf<String>()
+        val clearedPairIdFor = mutableListOf<String>()
         override fun observePairFor(myUid: String): Flow<RemotePair?> = flowOf(null)
         override suspend fun findPairFor(myUid: String): RemotePair? = null
         override suspend fun ensureOwnPairId(myUid: String, pairId: String) {
             ensured += myUid to pairId
         }
+        override suspend fun deletePair(pairId: String) { deletedPairs += pairId }
+        override suspend fun clearOwnPairId(myUid: String) { clearedPairIdFor += myUid }
     }
 
     private class FakeMirror : PairingMirror {

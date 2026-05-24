@@ -36,6 +36,7 @@ import com.xaeryx.translatorrep.pairing.PairingFirestoreRepository
 import com.xaeryx.translatorrep.pairing.PairingStatus
 import com.xaeryx.translatorrep.pairing.PairingViewModel
 import com.xaeryx.translatorrep.pairing.ui.PairedEmptyScreen
+import com.xaeryx.translatorrep.pairing.ui.PairedHomeScreen
 import com.xaeryx.translatorrep.ui.components.GlassIntensity
 import com.xaeryx.translatorrep.ui.components.MonochromeGlassPanel
 import com.xaeryx.translatorrep.ui.theme.TextPrimary
@@ -94,8 +95,14 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 PairingStatus.Unknown -> PairingLoadingGate()
                                 PairingStatus.Unpaired -> PairedEmptyRoute(ownerUid = state.uid)
-                                is PairingStatus.Paired ->
-                                    PairedHomePlaceholder(partnerName = pairing.partnerName)
+                                is PairingStatus.Paired -> PairedHomeScreen(
+                                    partnerName = pairing.partnerName,
+                                    // Story 1.13: unpair deletes /pairs + clears local state,
+                                    // flipping status to Unpaired → re-routes to Paired-Empty.
+                                    onUnpair = {
+                                        pairingRepository.unpair(state.uid, pairing.pairId)
+                                    },
+                                )
                             }
                         }
                         else -> AuthGateScreen(
@@ -165,40 +172,6 @@ private fun PairingLoadingGate() {
         contentAlignment = Alignment.Center,
     ) {
         CircularProgressIndicator(color = TextPrimary)
-    }
-}
-
-/**
- * Minimal Paired-home placeholder (Stories 1.10/1.11). The real Paired home — partner display
- * name styling + the audio/video Call button — is Story 2.2.
- */
-@Composable
-private fun PairedHomePlaceholder(partnerName: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
-        MonochromeGlassPanel(
-            intensity = GlassIntensity.Regular,
-            modifier = Modifier.padding(horizontal = 32.dp),
-        ) {
-            Column(
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text(
-                    text = "Paired with $partnerName",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = TextPrimary,
-                )
-                Text(
-                    text = "Calling arrives next.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary,
-                )
-            }
-        }
     }
 }
 
