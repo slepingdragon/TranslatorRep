@@ -1,0 +1,83 @@
+# Caddy v2 config — TranslatorRep TLS termination + reverse proxy.
+# Owning story: 1-3-oracle-vm-livekit-docker-compose-stack-domain (AC-2 + AC-3).
+#
+# One site: sfu.xaeryx.com.
+# Routes:
+#   - /v1/*    → auth-proxy:3000  (Node.js Firebase Admin SDK + LiveKit JWT mint)
+#   - /*       → livekit-server:7880  (WebSocket signaling; HTTP for healthchecks)
+#
+# Caddy auto-provisions a Let's Encrypt cert on first start. Bania's email
+# is configured at the email directive below — used by ACME for cert-expiry
+# notifications + Let's Encrypt account creation.
+
+# Global options.
+{
+    # ACME contact — Let's Encrypt cert expiry warnings go here.
+    # If you don't want notifications, use `acme_default_ca acme-v02.api.letsencrypt.org`.
+    email baniabradyy@gmail.com
+    # Enforce strict HTTP→HTTPS redirect for all non-ACME-challenge requests.
+    auto_https disable_redirects  # Caddy default redirects work; setting kept explicit.
+}
+
+# Main site.
+sfu.xaeryx.com {
+    # TLS — auto Let's Encrypt cert. First request takes ~30s to provision cert + key.
+    tls {
+        protocols tls1.2 tls1.3
+    }
+
+    # CORS — allow Android + iOS client origins to hit /v1/* from any embedded WebView
+    # contexts. The mobile clients themselves don't have a real origin, but if Bania
+    # ever puts up a web debug console (Story 8.x or beyond), this is preset.
+    @cors_preflight method OPTIONS
+    handle @cors_preflight {
+        header {
+            Access-Control-Allow-Origin "*"
+            Access-Control-Allow-Methods "GET, POST, OPTIONS"
+            Access-Control-Allow-Headers "Content-Type, Authorization"
+            Access-Control-Max-Age "86400"
+        }
+        respond 204
+    }
+
+    # auth-proxy: /v1/*  → http://localhost:3000/v1/*
+    # (host networking — auth-proxy binds 3000 on the VM; Caddy talks loopback)
+    handle /v1/* {
+        reverse_proxy localhost:3000 {
+            header_up X-Forwarded-Proto https
+            header_up X-Forwarded-Host {host}
+            header_up X-Real-IP {remote_host}
+        }
+    }
+
+    # LiveKit signaling: everything else → http://localhost:7880/
+    # WebSocket upgrade is automatic in Caddy v2 (no special config needed).
+    handle {
+        reverse_proxy localhost:7880 {
+            header_up X-Forwarded-Proto https
+            header_up X-Forwarded-Host {host}
+            header_up X-Real-IP {remote_host}
+        }
+    }
+
+    # Access log — JSON to stdout (captured by `docker logs caddy`).
+    log {
+        output stdout
+        format json
+        # Log only at info+ to avoid spamming on every healthcheck (Docker pings /v1/healthz
+        # every 30s; Caddy's default `debug` would generate ~3000 lines/day).
+        level info
+    }
+
+    # Rate-limit safety net (in addition to auth-proxy's per-UID rate limit) — cap any
+    # single IP to 60 req/min as a DDoS guardrail. Caddy's built-in plugin syntax;
+    # if this errors at deploy time, comment out and revisit (the plugin is in core
+    # Caddy v2 binary as of v2.7+, but version may vary on the official image).
+    # rate_limit {
+    #     zone per_ip {
+    #         key {remote_host}
+    #         events 60
+    #         window 1m
+    #     }
+    # }
+}

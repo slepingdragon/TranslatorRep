@@ -41,24 +41,29 @@ so that the Android + iOS clients can establish authenticated, App-Check-gated W
 - [ ] **0.7** SSH into the VM (`ssh -i ~/.ssh/oracle-translatorrep ubuntu@<vm-ip>`). Follow runbook §3 to install: Docker Engine (apt), Docker Compose v2 plugin, basic firewall hardening (`ufw allow 22,80,443,7881/tcp; ufw allow 7882,50000:60000/udp; ufw enable`).
 - [ ] **0.8** Verify the VM is ready for Phase 1: `docker compose version` reports v2.x; `dig sfu.xaeryx.com` from your laptop matches `curl -s ifconfig.me` run from the VM; basic `curl http://localhost` returns connection-refused (nothing listening yet — expected).
 
-### Phase 1 — `infra/` Docker Compose stack (next dev session, after Phase 0)
+### Phase 1a — `infra/` config scaffolding (this PR, 2026-05-24)
 
-- [ ] **1.1** Create `infra/` directory at repo root. Write `infra/docker-compose.yml` with 4 services: `livekit-server` (image `livekit/livekit-server:latest`, mounts `livekit.yaml`), `redis` (image `redis:7-alpine`, no exposed ports), `caddy` (image `caddy:2-alpine`, mounts `Caddyfile`, ports 80+443, depends_on livekit-server + auth-proxy), `auth-proxy` (build context `./auth-proxy/`, exposes :3000 internally, no host port — Caddy fronts it).
-- [ ] **1.2** Write `infra/livekit.yaml` — LiveKit Server config. Bind to `0.0.0.0:7880` (internal — Caddy reverse-proxies). API key/secret pair (env var refs — set in `.env`). TURN config for `7882/udp` external. ICE port range `50000-60000/udp`. Redis URL = `redis://redis:6379` (intra-compose hostname).
-- [ ] **1.3** Write `infra/Caddyfile` — single site block for `sfu.xaeryx.com`. Routes: `/v1/*` → `auth-proxy:3000`; `*` → `livekit-server:7880` (WebSocket upgrade required). Automatic HTTPS via Let's Encrypt (Caddy default).
-- [ ] **1.4** Implement `infra/auth-proxy/` (Node.js + Express + TypeScript). Per [`shared/auth-proxy-api.md`](../../shared/auth-proxy-api.md):
-  - `package.json` deps: `express`, `firebase-admin`, `livekit-server-sdk`, `zod` (request body validation), `pino` (structured logging). Dev deps: `typescript`, `@types/express`, `@types/node`, `tsx`, `vitest` (unit tests).
-  - `src/index.ts` — Express app boot, port 3000.
-  - `src/middleware/auth.ts` — verifies Firebase ID token + App Check token in parallel.
-  - `src/middleware/paired.ts` — Firestore lookup, verifies requester+peerUid are paired.
-  - `src/middleware/rateLimit.ts` — per-UID sliding-window 10/min using in-memory Map (Redis-backed in v2).
-  - `src/routes/token.ts` — implements `POST /v1/token` (mints LiveKit JWT).
-  - `src/routes/healthz.ts` — implements `GET /v1/healthz`.
-  - `Dockerfile` — multi-stage TypeScript build → distroless node22 runtime.
-  - Unit tests for token mint + paired-check + rate-limit logic (vitest, no Express/Firestore network calls).
-- [ ] **1.5** Write `infra/.env.example` — documents required env vars: `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `FIREBASE_SERVICE_ACCOUNT_JSON_BASE64` (the Admin SDK key, base64'd to fit one line). `.gitignore`s the real `.env`.
-- [ ] **1.6** Write `infra/deploy.sh` — single SSH-based deploy: `rsync` the `infra/` dir to the VM, `docker compose pull && docker compose up -d --build`. Idempotent.
-- [ ] **1.7** Write `infra/README.md` documenting: prereqs (Phase 0 done), one-time setup (generate LiveKit API key/secret pair, download Firebase service account JSON, populate `.env`), deploy command, rollback command.
+Config-only scaffold landed in parallel with Bania's Phase 0 work. Auth-proxy TypeScript implementation deferred to Phase 1b (fresh Claude session) — that's the substantial piece (~200-400 lines of TS with Firebase Admin SDK + LiveKit Server SDK integration).
+
+- [x] **1.1** Created `infra/` directory at repo root. Wrote `infra/docker-compose.yml` with 4 services. **Host networking on `livekit-server` + `redis`** (required for WebRTC ICE port-range; bridge networking would return container-internal IPs in ICE candidates which clients can't reach). `auth-proxy` block is pre-configured; service start fails with `./auth-proxy/Dockerfile not found` until Phase 1b lands (intentional gate; `deploy.sh` also pre-checks).
+- [x] **1.2** Wrote `infra/livekit.yaml` — port 7880 signaling (Caddy-fronted), 7881 TCP fallback, 7882 UDP TURN, 50000-60000 UDP media, Redis at `127.0.0.1:6379` (host networking). `max_participants: 2` + `empty_timeout: 300` (matches Epic 7 leave-and-rejoin spec).
+- [x] **1.3** Wrote `infra/Caddyfile` — single site `sfu.xaeryx.com`. `/v1/*` → `localhost:3000` (auth-proxy via host networking), else → `localhost:7880` (LiveKit). CORS preflight handler. Auto Let's Encrypt cert.
+- [ ] **1.4** **Phase 1b (deferred)** — `infra/auth-proxy/` Node.js TypeScript implementation. Placeholder `infra/auth-proxy/README.md` documents the planned source tree.
+- [x] **1.5** Wrote `infra/.env.example` documenting required env vars; `infra/.gitignore` excludes `.env`, `auth-proxy/node_modules`, `auth-proxy/dist`, `caddy_data/`, `caddy_config/`.
+- [x] **1.6** Wrote `infra/deploy.sh` — `rsync` + `ssh ... docker compose up -d --build`. Supports `--pull` and `--logs`. Pre-checks `.env` exists + `auth-proxy/Dockerfile` exists. Exec bit set in git index.
+- [x] **1.7** Wrote `infra/README.md` — operator runbook: prereqs, one-time setup, deploy command, verify steps, rollback, ops notes.
+
+### Phase 1b — auth-proxy TypeScript implementation (fresh Claude session, after Phase 0 done)
+
+- [ ] **1b.1** `infra/auth-proxy/package.json` + `tsconfig.json` + `vitest.config.ts`. Deps: `express`, `firebase-admin`, `livekit-server-sdk`, `zod`, `pino`. Dev deps: `typescript`, `@types/express`, `@types/node`, `tsx`, `vitest`.
+- [ ] **1b.2** `src/index.ts` — Express bootstrap, port 3000.
+- [ ] **1b.3** `src/middleware/auth.ts` — verify Firebase ID token + App Check token in parallel (Admin SDK).
+- [ ] **1b.4** `src/middleware/paired.ts` — Firestore `/pairs/{pairId}` lookup; reject if requester not `memberA`/`memberB`.
+- [ ] **1b.5** `src/middleware/rateLimit.ts` — per-UID sliding-window 10/min (in-memory Map).
+- [ ] **1b.6** `src/routes/token.ts` (POST /v1/token) + `src/routes/healthz.ts` (GET /v1/healthz).
+- [ ] **1b.7** `src/lib/livekit.ts` (AccessToken wrapper) + `src/lib/roomName.ts` (deterministic sha256-based room ID).
+- [ ] **1b.8** `Dockerfile` — multi-stage TS build → distroless node22 runtime.
+- [ ] **1b.9** `test/` — vitest unit tests (mock Admin SDK + LiveKit SDK at module boundary).
 
 ### Phase 2 — Deploy + verify (same session as Phase 1, or follow-up)
 
@@ -211,3 +216,4 @@ _(filled in at implementation time)_
 ### Change Log
 
 - 2026-05-24 — Story 1.3 file created (status `ready-for-dev`). Scaffolding PR commits the story file + Phase 0 runbook (`docs/runbooks/oracle-vm-setup.md`) so Bania can start Oracle Cloud signup in parallel. Phase 1 (`infra/` Docker Compose stack + auth-proxy TypeScript) + Phase 2 (deploy + verify) land in follow-up dev sessions after Phase 0 completes. Decision: single subdomain `sfu.xaeryx.com` for both LiveKit + auth-proxy (Caddy path-routes `/v1/*` to auth-proxy, else LiveKit) — simpler than the originally-architected `sfu.` + `auth.` two-subdomain split.
+- 2026-05-24 (later) — **Phase 1a landed in parallel with Bania's Phase 0 work** (Bania doing Oracle signup async). Config-only scaffold: `infra/docker-compose.yml` (4 services with host networking on livekit+redis for WebRTC ICE), `livekit.yaml` (max_participants:2 + empty_timeout:300 per Epic 7 spec), `Caddyfile` (sfu.xaeryx.com single site + path routing + CORS), `.env.example` + `.gitignore`, `deploy.sh` (rsync + ssh + docker compose, with pre-deploy checks), `README.md` (operator runbook), `auth-proxy/README.md` (Phase 1b placeholder). Phase 1 was SPLIT into 1a (config files; this PR) + 1b (auth-proxy TypeScript; fresh session). Status stays `ready-for-dev` until Phase 1b + Phase 2 land.
