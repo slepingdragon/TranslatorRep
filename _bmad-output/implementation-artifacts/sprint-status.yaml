@@ -37,7 +37,7 @@
 # docs/runbooks/ios-setup-on-mac.md for the iOS handoff.
 
 generated: 2026-05-23
-last_updated: 2026-05-24T18:00  # Story 1.3 scaffolded → ready-for-dev. Story file + Oracle Cloud setup runbook (docs/runbooks/oracle-vm-setup.md) committed. Bania starts Phase 0 (Oracle Cloud signup + VM provisioning + DNS + SSH + Docker install) async; Phase 1 (infra/ Docker Compose + auth-proxy TypeScript) + Phase 2 (deploy + verify) happen in fresh sessions after Phase 0 done. Also today: 1.4 Phase 1 landed (Firebase wiring); 3.2b Phase 4 landed (TQ-3 + TQ-6 = 21 fixtures).
+last_updated: 2026-05-24T19:30  # Story 1.6d landed → review: signing config in app/build.gradle.kts (reads keystore.properties; falls back to debug for local-build ergonomics), Compose UI test scaffold (compiles, CI deferred), keystore-gen runbook. Roborazzi screenshot tests SPLIT OUT to new sub-story 1-6e (Windows Skia native-graphics risk + irrelevant to QR-install critical path). Also: Story 1.3 scaffolded (Oracle Cloud runbook); 1.4 Phase 1 landed (Firebase wiring); 3.2b Phase 4 landed (TQ-3+TQ-6). Bania doing Oracle Phase 0 async.
 project: TranslatorRep
 project_key: NOKEY
 tracking_system: file-system
@@ -56,7 +56,8 @@ development_status:
   1-6-cicd-per-stack: done              # Android CI live + CR patches landed; iOS + infra + Compose UI/Roborazzi/release deferred to 1-6b/1-6c/1-6d
   1-6b-ios-ci-flesh-out: backlog        # Sequenced after Story 1.2 (Xcode project on Mac)
   1-6c-infra-ci-flesh-out: backlog      # Sequenced after Story 1.3 (Oracle VM + infra/ dir)
-  1-6d-android-ci-flesh-out: backlog    # Adds Compose UI tests + Roborazzi + assembleRelease+signing-config (added by 1.6 CR 2026-05-23)
+  1-6d-android-ci-flesh-out: review     # Landed 2026-05-24: signing config (reads app/keystore.properties OR debug fallback) + assembleRelease task working locally + Compose UI instrumented-test scaffold (compiles; CI deferred — needs emulator runner) + docs/runbooks/release-keystore-setup.md. Local validate: detekt + tests + assembleDebug + assembleRelease all green. Roborazzi SPLIT to 1-6e. CI release-build (with real GH secret-decoded keystore) deferred to Story 1.4c.
+  1-6e-roborazzi-screenshot-tests: backlog  # NEW 2026-05-24 — split from 1-6d. Roborazzi Compose screenshot testing in CI. Deferred because (a) Windows Skia native-graphics setup risk, (b) screenshot-test ROI low pre-product-validation. Picks up when there's a flaky Compose UI bug that justifies the setup.
   1-7-shared-specs-directory-cross-platform-fixtures: done
   1-8-anonymous-sign-in-on-first-launch: backlog
   1-9-display-own-pairing-code: backlog

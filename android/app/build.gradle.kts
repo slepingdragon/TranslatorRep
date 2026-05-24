@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -30,6 +32,33 @@ android {
         // repo root; Gradle copies them into androidTest resources at build.
     }
 
+    // Story 1.6d signing config — release builds sign with the upload keystore
+    // if `app/keystore.properties` exists (Bania creates it per
+    // `docs/runbooks/release-keystore-setup.md` when starting Story 1.4c),
+    // OR fall back to the debug signing config so local `assembleRelease`
+    // works on day 1 without forcing keystore generation. Fallback APKs are
+    // NOT publishable to Play Store (debug key); fallback is purely a build-
+    // ergonomics escape hatch.
+    signingConfigs {
+        create("release") {
+            val propsFile = rootProject.file("app/keystore.properties")
+            if (propsFile.exists()) {
+                val props = Properties().apply { propsFile.inputStream().use(::load) }
+                storeFile = rootProject.file(props.getProperty("storeFile"))
+                storePassword = props.getProperty("storePassword")
+                keyAlias = props.getProperty("keyAlias")
+                keyPassword = props.getProperty("keyPassword")
+            } else {
+                logger.warn(
+                    "Story 1.6d: app/keystore.properties not found — `assembleRelease` " +
+                        "will sign with the DEBUG keystore (NOT publishable to Play Store). " +
+                        "See docs/runbooks/release-keystore-setup.md to generate the upload key.",
+                )
+                initWith(signingConfigs.getByName("debug"))
+            }
+        }
+    }
+
     buildTypes {
         debug {
             // BuildConfig flag for Story 3.11 three-layer translation capture
@@ -44,6 +73,7 @@ android {
                 "proguard-rules.pro",
             )
             buildConfigField("Boolean", "TRANSLATION_TRACE_ENABLED", "false")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
