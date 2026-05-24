@@ -1,0 +1,17 @@
+# yamllint config for infra/ deploy-stack YAML (livekit.yaml, docker-compose.yml).
+# Consumed by .github/workflows/infra-ci.yml (Story 1.6c) via `yamllint -c`.
+#
+# Based on the `relaxed` preset, with two deliberate choices:
+#   - line-length max 120: these config files carry explanatory comments; 80 is
+#     too tight and produces pure noise (longest real line is ~105).
+#   - new-lines kept at unix (\n): catches CRLF leakage from a Windows committer,
+#     which would break the scripts/services these files configure on the Linux VM.
+---
+extends: relaxed
+
+rules:
+  line-length:
+    max: 120
+    level: warning
+  new-lines:
+    type: unix

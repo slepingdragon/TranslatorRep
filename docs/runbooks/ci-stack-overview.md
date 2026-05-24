@@ -10,7 +10,7 @@
 |---|---|---|---|---|
 | `.github/workflows/android-ci.yml` | `android/**`, `shared/**`, `.github/workflows/android-ci.yml` | **Full:** checkout → JDK 17 (Temurin) → Gradle 8.10.2 (wrapper) → `detekt` → `testDebugUnitTest` → `assembleDebug` → JUnit XML annotations → APK artifact upload (7-day retention). | 1-6-cicd-per-stack | 1-6d-android-ci-flesh-out (adds Compose UI tests + Roborazzi screenshot diff + `assembleRelease` with signing-config) |
 | `.github/workflows/ios-ci.yml` | `ios/**`, `shared/**`, `.github/workflows/ios-ci.yml` | **Stub.** Single `echo` step on `ubuntu-latest` (runner will flip to `macos-latest` in 1.6b when `xcodebuild` lands). Exits 0 to keep PRs unblocked. | 1-6-cicd-per-stack | 1-6b-ios-ci-flesh-out (sequenced after Story 1.2 lands the Xcode project on Mac) |
-| `.github/workflows/infra-ci.yml` | `infra/**`, `.github/workflows/infra-ci.yml` | **Stub.** Single `echo` step on `ubuntu-latest`. Exits 0 to keep PRs unblocked. | 1-6-cicd-per-stack | 1-6c-infra-ci-flesh-out (sequenced after Story 1.3 lands the Oracle VM + `infra/` directory) |
+| `.github/workflows/infra-ci.yml` | `infra/**`, `.github/workflows/infra-ci.yml` | **Full (Story 1.6c, 2026-05-24).** Three parallel jobs: **config-lint** (`yamllint` livekit.yaml + docker-compose.yml via `infra/.yamllint.yml` → `shellcheck --severity=warning` deploy.sh + scripts/*.sh → `docker compose config -q` → `caddy validate` via `caddy:2-alpine`); **auth-proxy** (Node 22: `npm ci` → typecheck → vitest (23 tests) → `tsc` build); **auth-proxy-docker** (`docker build` the distroless image, no push). **Deferred:** tag-triggered `ssh + deploy.sh` on the Oracle VM — see §5. | 1-6-cicd-per-stack | — (deploy step deferred pending Oracle-vs-LiveKit-Cloud decision) |
 
 Path filters are intentional: an Android-only PR will not trigger iOS or infra workflows, and vice-versa. This keeps the GitHub Actions free-tier minute budget lean and isolates failure surfaces per stack. Each workflow's own YAML path is also included so edits to the workflow itself trigger the workflow on the PR that introduces them (self-validation).
 
@@ -75,15 +75,25 @@ Replace the stub job in `.github/workflows/ios-ci.yml` with these steps, in orde
 - [ ] **Snapshot tests** — pattern decision (point-free `swift-snapshot-testing` vs. yaslab pattern) made in Story 1.6b itself.
 - [ ] **Archive (TestFlight Ad Hoc)** — gated on `push` of a tag (e.g., `ios-v*`). Requires signing-config provisioning analogous to Android's deferred 1.6d.
 
-### Story 1.6c — `infra-ci.yml` flesh-out (sequenced after Story 1.3)
+### Story 1.6c — `infra-ci.yml` flesh-out — ✅ DONE (2026-05-24)
 
-Replace the stub job in `.github/workflows/infra-ci.yml` with these steps, in order (per architecture.md §"CI/CD Per Stack" row 3):
+Landed in Story 1.6c. The stub was replaced with three parallel jobs (see §1 table for the full step list). Implementation notes that diverge from the original plan above:
 
-- [ ] **`yamllint`** — lint `infra/livekit.yaml` and `infra/Caddyfile`. Action: `ibiqlik/action-yamllint@v3`.
-- [ ] **`docker compose config`** — validation-only (`-f infra/docker-compose.yml config`), no `up`. Catches malformed compose files before deploy.
-- [ ] **SSH deploy on tag push** — `appleboy/ssh-action@v1.0.3` (or equivalent) executing `./infra/scripts/deploy.sh` on the Oracle VM. Requires `ORACLE_VM_SSH_KEY` GitHub Actions secret.
+- **`yamllint`** — lints `infra/livekit.yaml` + `infra/docker-compose.yml` (NOT the Caddyfile — it isn't YAML; Caddy syntax is validated separately by `caddy validate`). Invoked as `python -m yamllint -c infra/.yamllint.yml` (python is pre-installed on the runner) rather than a third-party action — fewer supply-chain surfaces, PATH-independent.
+- **`shellcheck`** — added beyond the original plan: lints `infra/deploy.sh` + `infra/scripts/*.sh` at `--severity=warning` (info-level SC2029 in deploy.sh is intentional client-side expansion). Pre-installed on `ubuntu-latest`.
+- **`docker compose config -q`** — as planned (validation-only, no `up`).
+- **`caddy validate`** — added beyond the original plan: validates the Caddyfile via the official `caddy:2-alpine` image (no caddy binary on the runner).
+- **auth-proxy test + build** — added beyond the original plan (the auth-proxy didn't exist when row 3 was written): `npm ci → typecheck → vitest → tsc` on Node 22, plus a `docker build` of the distroless image. This is the story's highest-value addition — it closes the gap where the proxy's 23 tests had no CI.
 
-Both follow-up stories should mirror this runbook's "Current state" table by adding their own row(s) at completion.
+#### Still deferred — SSH deploy on tag push
+
+**NOT wired.** Reason: Story 1.3 Phase 2 hasn't run (no Oracle VM exists to deploy to) **and** the Oracle-vs-LiveKit-Cloud hosting decision is open (Bania deprioritized Oracle 2026-05-24). When that resolves and a VM (or equivalent host) exists, add a `deploy` job:
+
+- Gate: `if: startsWith(github.ref, 'refs/tags/infra-v')` (push of an `infra-v*` tag).
+- Action: `appleboy/ssh-action` (SHA-pinned) executing `./infra/deploy.sh` on the host.
+- Secret: `ORACLE_VM_SSH_KEY` (private key) — `gh secret set ORACLE_VM_SSH_KEY < ~/.ssh/oracle-translatorrep`.
+
+If the decision flips to LiveKit Cloud, the auth-proxy still needs a host (Fly.io / Render / Cloud Run); the same tag-gated deploy job applies with a different target.
 
 ---
 

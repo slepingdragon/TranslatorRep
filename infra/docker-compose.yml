@@ -70,11 +70,10 @@ services:
       retries: 3
 
   auth-proxy:
-    # TODO Story 1.3 Phase 1b: implement Node.js + TypeScript service per
-    # shared/auth-proxy-api.md. This service block IS pre-configured for the
-    # expected shape; just the `./auth-proxy/` directory contents need to be
-    # written (Dockerfile + src/ + package.json + tests). Fresh Claude session
-    # picks this up — see Story 1.3 Phase 1b in the story file.
+    # Node.js + TypeScript service implementing shared/auth-proxy-api.md
+    # (Story 1.3 Phase 1b, landed 2026-05-24): POST /v1/token mints LiveKit JWTs
+    # after Firebase Auth + App Check verification; GET /v1/healthz. Source +
+    # 23-test vitest suite under ./auth-proxy/; built by Story 1.6c's infra-ci.
     build:
       context: ./auth-proxy
       dockerfile: Dockerfile

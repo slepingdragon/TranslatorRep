@@ -12,3 +12,10 @@
 
 android/gradlew      text eol=lf
 android/gradlew.bat  text eol=crlf
+
+# Story 1.6c — infra shell scripts + the auth-proxy Dockerfile execute on Linux
+# (GitHub CI runners + the Oracle VM). CRLF would break `bash`/shellcheck (SC1017)
+# and the distroless build. The index already stores LF; pinning here keeps a
+# Windows checkout (core.autocrlf=true) from re-introducing CRLF in the working tree.
+*.sh                          text eol=lf
+infra/auth-proxy/Dockerfile   text eol=lf
