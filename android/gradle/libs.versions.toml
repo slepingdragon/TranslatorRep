@@ -82,6 +82,9 @@ androidx-compose-foundation = { group = "androidx.compose.foundation", name = "f
 # Kotlinx coroutines
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+# Bridges Google Play Services Task<T> to suspending await() — needed by Firebase
+# Auth/Firestore call sites (Story 1.4 smoke test + Stories 1.8-1.13 pairing arc).
+kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines" }
 
 # LiveKit Android SDK — WebRTC media + Data Channel + Insertable Streams E2EE
 livekit-android = { group = "io.livekit", name = "livekit-android", version.ref = "livekit" }
@@ -144,4 +147,5 @@ lifecycle = [
 coroutines = [
     "kotlinx-coroutines-core",
     "kotlinx-coroutines-android",
+    "kotlinx-coroutines-play-services",
 ]
