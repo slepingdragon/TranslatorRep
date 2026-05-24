@@ -266,7 +266,7 @@ GitHub Actions free tier = 2000 minutes/month. Solo-dev PR volume <30/month × ~
 | `1-3-oracle-vm-livekit-...` | Requires Oracle Cloud account + Cloudflare Registrar + `xaeryx.com` domain (~$10/yr) + SSH keypair | Bania completes manually |
 | `1-4-firebase-init-...` (Android) | Phase 0 (manual Firebase console setup) per `docs/runbooks/firebase-setup-android.md` | **Prep PR landed 2026-05-23** (story file + runbook + `firebase/` rules + Kotlin stub). `ready-for-dev`. Activation PR waits on Bania's Phase 0. |
 | `1-4b-ios-firebase-init` | Story 1.2 + 1.4 | Future iOS Claude session |
-| `1-4c-firebase-app-distribution-android` | Story 1.4 | Gives the QR/install workflow for testing builds on phone |
+| `1-4c-play-store-internal-testing-android` | Story 1.4 + Story 1.6d | Wires CI → signed AAB → Play Console Internal Testing track → opt-in URL (QR-able). Gives the "scan code, install via Play Store" workflow. **Renamed 2026-05-24** from `firebase-app-distribution` — Internal Testing is cleaner for native Android + validates Play Integrity end-to-end. Bania has Play Console dev account confirmed. |
 | `1-8` through `1-13` (pairing arc) | All gated on Story 1.4 (Firebase) | Cascading block — unblocks as soon as 1.4 lands |
 | `1-6b-ios-ci-flesh-out` | Story 1.2 | iOS CI flesh-out |
 | `1-6c-infra-ci-flesh-out` | Story 1.3 | infra CI flesh-out |

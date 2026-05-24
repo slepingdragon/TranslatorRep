@@ -11,7 +11,7 @@
 ## Prerequisites
 
 - ✅ Google account (Bania already has one — same one as for the Xaeryx domain ownership ideally)
-- ⚠️ **Google Play Console developer account ($25 one-time fee)** — required for Play Integrity App Check provider. Sign up at https://play.google.com/console/signup. If you don't want to pay $25 right now, you can skip §5 (Play Integrity) and use only the Debug App Check provider — but `FirebaseBootstrap` will then fail App Check in any release build, blocking eventual store publication. Recommended: pay the $25 now to unblock everything.
+- ✅ **Google Play Console developer account** — confirmed available 2026-05-24. Required for Play Integrity App Check provider + Google Play Internal Testing distribution (Story 1.4c). No $25 gate to navigate around.
 - ✅ Node.js + npm (to install Firebase CLI). If missing: install via [nvm-windows](https://github.com/coreybutler/nvm-windows) on Windows.
 
 ---
@@ -84,9 +84,9 @@ App Check uses the Play Integrity API which lives in Google Cloud, not Firebase 
 
 ### 5c. Link to Google Play Console
 
-If you haven't yet set up Google Play Console for `com.xaeryx.translatorrep`:
+The developer account already exists (confirmed 2026-05-24). If you haven't yet created the app entry for `com.xaeryx.translatorrep`:
 
-1. Go to https://play.google.com/console → if first time, complete developer registration ($25 one-time).
+1. Go to https://play.google.com/console.
 2. **Create app** → App name `TranslatorRep` → Default language English (United States) (you can localize later) → App or game **App** → Free → accept declarations → **Create app**.
 3. You don't need to fill out the full store listing right now. We just need the package name registered.
 4. **App integrity** (left sidebar under **Release**) → **Play Integrity API** tab → **Link project** → select the Google Cloud project from §5b.
@@ -178,3 +178,44 @@ Claude will then:
 5. Open a PR with the wiring; you do the manual device smoke test (Phase 3); story flips to `review` then `done`.
 
 That follow-up PR is small + mechanical because the heavy lifting (scaffolding, design, runbook authoring) is in this PR.
+
+---
+
+## §9. Google Play Internal Testing (Story 1.4c) — not in Phase 0; forward-look
+
+> **Not part of this runbook's manual checklist.** §9 explains what Story 1.4c will do, so you understand the trajectory while you're in the Play Console doing §5.
+
+Once **Story 1.4** (this story) and **Story 1.6d** (release signing config + `assembleRelease` in CI) both land, **Story 1.4c** wires Google Play Internal Testing as the QR/install distribution mechanism — the "scan a code, install on phone, no USB cable" workflow you originally wanted from Expo Go.
+
+### What Story 1.4c will deliver
+
+- CI builds **signed AAB** on every merge to `main` (depends on Story 1.6d signing config landing first)
+- CI uploads AAB to **Google Play Console → Testing → Internal testing** via the `r0adkll/upload-google-play@v1` GitHub Action (or equivalent)
+- Play Console gives you an **opt-in URL** like `https://play.google.com/apps/internaltest/<long-id>` — anyone on the testers list can open it
+- Story 1.4c also generates a **QR code** from the opt-in URL (via `qrencode` in CI, or a markdown link in the runbook) so you can scan it from your phone to install
+
+### What you can do in Play Console now (while you're already there for §5)
+
+If you want to get a head start on §9 work without waiting for Story 1.4c:
+
+1. Play Console → your `TranslatorRep` app → **Testing → Internal testing → Manage testers**
+2. **Create email list** → name it `bania-self` → add your own Google account email
+3. **Save**. The list is now reusable when Story 1.4c lands.
+
+That's the only Play Console pre-work you can do today. The actual track release + AAB upload need Story 1.6d's signed AAB to exist first.
+
+### Why Internal Testing instead of Firebase App Distribution
+
+Originally Story 1.4c was scoped as "Firebase App Distribution." The 2026-05-24 rescope (after you confirmed Play Console dev account already exists) replaced it with **Google Play Internal Testing** because:
+
+| | Firebase App Distribution | Google Play Internal Testing (chosen) |
+|---|---|---|
+| Install flow | Email link → tap → install via FAD tester app | Email link → tap → install via real Play Store |
+| Signing | Any signed APK (debug or release) | Must be signed with upload key (real release path) |
+| FCM push notifications | Often broken in dev APKs | Works (real Play Store install registers properly) |
+| Play Integrity validation | Skipped (App Distribution bypasses) | Real verdict (validates Story 1.4's App Check end-to-end) |
+| Setup overhead | Lower | Slightly higher (needs upload keystore + Internal Testing track) |
+| Closer to production behavior | No | Yes |
+| Net | Faster to first build | More accurate, validates more of the stack |
+
+For a 2-user solo project where you want to validate the real Firebase + App Check + push notification stack on a real phone, Internal Testing is the right call.
