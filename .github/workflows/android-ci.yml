@@ -61,6 +61,28 @@ jobs:
       - name: ensure-gradlew-executable
         run: chmod +x ./gradlew
 
+      # Story 1.4 — google-services.json is gitignored (per AC-4) but the
+      # `google-services` Gradle plugin REQUIRES it at build time. Materialize
+      # from the GOOGLE_SERVICES_JSON repo secret. The secret contents are the
+      # raw file contents (NOT base64) so this step is a single redirect.
+      # The secret is solo-dev-owned + auto-scrubbed from CI logs by GH Actions.
+      # If the secret is empty (e.g., fork PR — secrets aren't passed to fork
+      # PRs), the redirect creates an empty file and `google-services` plugin
+      # fails with a clear "missing/malformed google-services.json" error.
+      # That failure mode is intentional and documented in Story 1.6 dev notes
+      # (solo-dev posture: no fork PRs expected; CI on a fork would naturally
+      # fail and that's fine).
+      - name: write-google-services-json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON" ]; then
+            echo "::error::GOOGLE_SERVICES_JSON secret not set — assembleDebug will fail."
+            echo "Solo-dev fix: gh secret set GOOGLE_SERVICES_JSON --body-file android/app/google-services.json"
+            exit 1
+          fi
+          printf '%s' "$GOOGLE_SERVICES_JSON" > app/google-services.json
+
       - name: detekt
         run: ./gradlew :app:detekt --no-daemon
 
