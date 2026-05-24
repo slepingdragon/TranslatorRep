@@ -12,9 +12,12 @@ services:
   - type: web
     name: translatorrep-auth-proxy
     runtime: docker
-    # Build only the auth-proxy (monorepo: android/, ios/, infra/ live alongside).
-    rootDir: infra/auth-proxy
-    dockerfilePath: ./Dockerfile
+    # Monorepo (android/, ios/, infra/): build only the auth-proxy. Both paths are
+    # relative to the REPO ROOT (Render does not resolve them against rootDir), and
+    # dockerContext must be the auth-proxy dir so the Dockerfile's COPY package.json
+    # / src resolves.
+    dockerfilePath: ./infra/auth-proxy/Dockerfile
+    dockerContext: ./infra/auth-proxy
     # Singapore = closest Render region to Indonesia (match the LiveKit Cloud region).
     region: singapore
     # `starter` is always-on (no cold starts mid-call-setup). `free` works for
