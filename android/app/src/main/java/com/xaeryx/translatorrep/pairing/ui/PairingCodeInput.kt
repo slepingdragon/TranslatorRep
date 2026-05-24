@@ -1,36 +1,57 @@
 package com.xaeryx.translatorrep.pairing.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.xaeryx.translatorrep.ui.components.GlassIntensity
 import com.xaeryx.translatorrep.ui.components.MonochromeGlassPanel
+import com.xaeryx.translatorrep.ui.theme.StateRed
 import com.xaeryx.translatorrep.ui.theme.TextPrimary
 import com.xaeryx.translatorrep.ui.theme.TextTertiary
 import com.xaeryx.translatorrep.ui.theme.TranslatorRepTheme
 
+private const val PLACEHOLDER_DASHES = "—  —  —  —  —  —"
+
 /**
  * `PairingCodeInput` (UX-DR13) — partner's-code entry, foregrounded above the own-code
- * display in the D4b "partner-input-first" layout (UX-DR15).
+ * display in the D4b "partner-input-first" layout (UX-DR15). Story 1.10 makes it interactive:
+ * a single 6-digit numeric field (native number keypad), `text-primary` digits over a
+ * placeholder of dashes, the "Pair" button enabled only at exactly 6 digits, and an inline
+ * error below the field. State is hoisted to [PairingViewModel] via the host screen.
  *
- * **Story 1.9 scope:** presentational only — it renders the empty state (placeholder digits +
- * a disabled "Pair" button) so the Paired-Empty home has its correct D4b layout (and the
- * own-code panel sits visually below it, per AC-7). The interactive behavior — numeric
- * keyboard, 1–5/6-digit states, the Firestore code lookup, the "Pair" transition, and the
- * inline errors ("Code not found" / "Code expired" / "That's your own code") — is **Story
- * 1.10**, which replaces this stub with the stateful component.
+ * @param canPair true when exactly 6 digits are entered and no submit is in flight.
  */
 @Composable
-fun PairingCodeInput(modifier: Modifier = Modifier) {
+fun PairingCodeInput(
+    code: String,
+    onCodeChange: (String) -> Unit,
+    onPair: () -> Unit,
+    canPair: Boolean,
+    submitting: Boolean,
+    errorMessage: String?,
+    modifier: Modifier = Modifier,
+) {
     MonochromeGlassPanel(
         intensity = GlassIntensity.Regular,
         modifier = modifier,
@@ -47,18 +68,63 @@ fun PairingCodeInput(modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.labelLarge,
                 color = TextPrimary,
             )
-            // Placeholder digits — the real numeric field lands in Story 1.10.
-            Text(
-                text = "—  —  —  —  —  —",
-                style = MaterialTheme.typography.displayLarge,
-                color = TextTertiary,
+
+            BasicTextField(
+                value = code,
+                onValueChange = onCodeChange,
+                enabled = !submitting,
+                singleLine = true,
+                textStyle = MaterialTheme.typography.displayLarge.copy(
+                    color = TextPrimary,
+                    textAlign = TextAlign.Center,
+                ),
+                cursorBrush = SolidColor(TextPrimary),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done,
+                ),
+                keyboardActions = KeyboardActions(onDone = { if (canPair) onPair() }),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp) // UX-DR13 large hit target
+                    .semantics { contentDescription = "Partner's 6-digit pairing code" },
+                decorationBox = { innerTextField ->
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (code.isEmpty()) {
+                            Text(
+                                text = PLACEHOLDER_DASHES,
+                                style = MaterialTheme.typography.displayLarge,
+                                color = TextTertiary,
+                            )
+                        }
+                        innerTextField()
+                    }
+                },
             )
+
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = StateRed,
+                )
+            }
+
             Button(
-                onClick = {},
-                enabled = false, // Enabled at exactly 6 digits in Story 1.10.
-                modifier = Modifier.fillMaxWidth(),
+                onClick = onPair,
+                enabled = canPair,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp),
             ) {
-                Text("Pair")
+                if (submitting) {
+                    CircularProgressIndicator(modifier = Modifier.heightIn(max = 24.dp))
+                } else {
+                    Text("Pair")
+                }
             }
         }
     }
@@ -66,8 +132,32 @@ fun PairingCodeInput(modifier: Modifier = Modifier) {
 
 @Preview(showBackground = true, backgroundColor = 0xFF0A0A0B)
 @Composable
-private fun PairingCodeInputPreview() {
+private fun PairingCodeInputEmptyPreview() {
     TranslatorRepTheme {
-        PairingCodeInput(modifier = Modifier.padding(16.dp))
+        PairingCodeInput(
+            code = "",
+            onCodeChange = {},
+            onPair = {},
+            canPair = false,
+            submitting = false,
+            errorMessage = null,
+            modifier = Modifier.padding(16.dp),
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF0A0A0B)
+@Composable
+private fun PairingCodeInputErrorPreview() {
+    TranslatorRepTheme {
+        PairingCodeInput(
+            code = "482917",
+            onCodeChange = {},
+            onPair = {},
+            canPair = true,
+            submitting = false,
+            errorMessage = "Code not found",
+            modifier = Modifier.padding(16.dp),
+        )
     }
 }

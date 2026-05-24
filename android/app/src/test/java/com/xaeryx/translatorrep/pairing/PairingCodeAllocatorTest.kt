@@ -92,6 +92,9 @@ class PairingCodeAllocatorTest {
         override suspend fun findOwnedCode(ownerId: String): String? =
             stored.entries.firstOrNull { it.value == ownerId }?.key
 
+        override suspend fun lookup(code: String): CodeRecord? =
+            stored[code]?.let { CodeRecord(ownerId = it, expiresAtMillis = null) }
+
         override suspend fun exists(code: String): Boolean {
             existsArgs += code
             return if (existsArgs.size <= collideFirstN) true else stored.containsKey(code)

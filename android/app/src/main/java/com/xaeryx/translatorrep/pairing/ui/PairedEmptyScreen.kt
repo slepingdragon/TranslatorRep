@@ -4,7 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -14,6 +17,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -25,32 +29,44 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.xaeryx.translatorrep.pairing.PairingCodeUiState
+import com.xaeryx.translatorrep.pairing.PairingInputUiState
 import com.xaeryx.translatorrep.pairing.PairingViewModel
 import com.xaeryx.translatorrep.ui.theme.TextSecondary
 import com.xaeryx.translatorrep.ui.theme.TranslatorRepTheme
 import kotlinx.coroutines.launch
 
+private const val PAIRING_CODE_LENGTH = 6
+
 /**
- * Paired-Empty home (Story 1.9). D4b "partner-input-first" layout (UX-DR15): the partner-code
- * input is foregrounded at the top (the active task), with the user's own code displayed
- * below the divider (the passive artifact the partner needs).
+ * Paired-Empty home (Stories 1.9 + 1.10). D4b "partner-input-first" layout (UX-DR15): the
+ * interactive partner-code input is foregrounded at the top (the active task), with the user's
+ * own code displayed below the divider (the passive artifact the partner needs).
  *
- * Stateful entry point: collects [PairingViewModel.codeState], owns the clipboard write +
- * "Code copied" snackbar (kept here so [PairingCodeDisplay] stays Context-free), and forwards
- * regenerate / retry to the ViewModel.
+ * Stateful entry point: collects the ViewModel's three flows, owns the clipboard write +
+ * "Code copied" snackbar, and — when pairing succeeds — invokes [onPaired] so the host
+ * navigates to the Paired home.
  */
 @Composable
 fun PairedEmptyScreen(
     viewModel: PairingViewModel,
+    onPaired: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val codeState by viewModel.codeState.collectAsStateWithLifecycle()
+    val enteredCode by viewModel.enteredCode.collectAsStateWithLifecycle()
+    val inputState by viewModel.inputState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val clipboard = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
 
+    LaunchedEffect(inputState) {
+        (inputState as? PairingInputUiState.Paired)?.let { onPaired(it.pairId) }
+    }
+
     PairedEmptyContent(
         codeState = codeState,
+        enteredCode = enteredCode,
+        inputState = inputState,
         snackbarHostState = snackbarHostState,
         onCopy = { code ->
             clipboard.setText(AnnotatedString(code))
@@ -58,21 +74,24 @@ fun PairedEmptyScreen(
         },
         onRegenerate = viewModel::regenerate,
         onRetry = viewModel::retry,
+        onCodeChange = viewModel::onCodeChange,
+        onPair = viewModel::pair,
         modifier = modifier,
     )
 }
 
-/**
- * Stateless content — previewable + decoupled from the ViewModel. [onCopy] receives the code
- * so the host can write the clipboard + show the snackbar.
- */
+/** Stateless content — previewable + decoupled from the ViewModel. */
 @Composable
 private fun PairedEmptyContent(
     codeState: PairingCodeUiState,
+    enteredCode: String,
+    inputState: PairingInputUiState,
     snackbarHostState: SnackbarHostState,
     onCopy: (String) -> Unit,
     onRegenerate: () -> Unit,
     onRetry: () -> Unit,
+    onCodeChange: (String) -> Unit,
+    onPair: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -83,12 +102,23 @@ private fun PairedEmptyContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
-                .padding(horizontal = 24.dp),
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             // D4b: partner-input first (the active task).
-            PairingCodeInput(modifier = Modifier.fillMaxWidth())
+            PairingCodeInput(
+                code = enteredCode,
+                onCodeChange = onCodeChange,
+                onPair = onPair,
+                canPair = enteredCode.length == PAIRING_CODE_LENGTH &&
+                    inputState !is PairingInputUiState.Submitting,
+                submitting = inputState is PairingInputUiState.Submitting,
+                errorMessage = (inputState as? PairingInputUiState.Error)?.message,
+                modifier = Modifier.fillMaxWidth(),
+            )
 
             HorizontalDivider()
 
@@ -145,24 +175,32 @@ private fun PairedEmptyReadyPreview() {
     TranslatorRepTheme {
         PairedEmptyContent(
             codeState = PairingCodeUiState.Ready("482917"),
+            enteredCode = "",
+            inputState = PairingInputUiState.Editing,
             snackbarHostState = remember { SnackbarHostState() },
             onCopy = {},
             onRegenerate = {},
             onRetry = {},
+            onCodeChange = {},
+            onPair = {},
         )
     }
 }
 
 @Preview(showBackground = true, backgroundColor = 0xFF0A0A0B)
 @Composable
-private fun PairedEmptyLoadingPreview() {
+private fun PairedEmptyErrorPreview() {
     TranslatorRepTheme {
         PairedEmptyContent(
-            codeState = PairingCodeUiState.Loading,
+            codeState = PairingCodeUiState.Ready("482917"),
+            enteredCode = "123456",
+            inputState = PairingInputUiState.Error("Code not found"),
             snackbarHostState = remember { SnackbarHostState() },
             onCopy = {},
             onRegenerate = {},
             onRetry = {},
+            onCodeChange = {},
+            onPair = {},
         )
     }
 }
