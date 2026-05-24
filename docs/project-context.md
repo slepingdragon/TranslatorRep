@@ -2,6 +2,7 @@
 project_name: TranslatorRep
 user_name: Bania
 generated: 2026-05-23
+last_updated: 2026-05-24
 generated_by: bmad-generate-project-context
 sections_completed:
   - identity_and_authority
@@ -14,11 +15,16 @@ sections_completed:
   - testing
   - ci_cd
   - externally_blocked_work
+  - pointers
+  - update_protocol
+  - remaining_sessions_to_ship_v1
 ---
 
 # Project Context for AI Agents
 
 > **Read this first.** Distilled rules + landmines for any AI agent (Claude Code, BMad skills, code review) doing work in this repo. Optimized for LLM context: facts and pointers, not prose. If a rule is obvious from a quick file scan, it's not here — only things you'd otherwise have to learn the hard way.
+
+> **Session handoff (2026-05-24):** Today landed 9 PRs — Stories 1.6 done, 3.2 done, 3.2b TQ-1 complete (all 14 Indonesian discourse particles + 42 golden-file fixtures). Story 1.4 (Firebase Android) is `ready-for-dev` awaiting Bania's manual Phase 0 in browser. See §13 below for the full remaining-session map.
 
 ---
 
@@ -97,6 +103,7 @@ These are documented bugs / footguns that have actually bitten the project. Each
 - **Detekt config path.** Lives at `android/detekt-config.yml`, NOT `android/app/detekt-config.yml`. The `detekt { config.setFrom(files("$rootDir/detekt-config.yml")) }` block resolves `$rootDir` to `android/` (because Gradle is invoked from `android/`). CI must `cd android` first — handled by `defaults.run.working-directory: android` in android-ci.yml.
 - **JUnit assertion imports.** Use `import org.junit.Assert.assertEquals` (JUnit 4 style, message-first signature: `assertEquals("msg", expected, actual)`). `kotlin.test.assertEquals` is NOT on the classpath. Caught the hard way during Story 1.6 smoke testing.
 - **`--no-daemon` everywhere on CI.** Standard CI convention — daemon doesn't persist across ephemeral runners. The `gradle/actions/setup-gradle@v4` cache is at Gradle-home level, not daemon level. Don't "fix" this.
+- **`/shared/particle-rules-fixtures/` is NOT a Gradle test input.** When adding new fixtures locally, `./gradlew :app:testDebugUnitTest` will be UP-TO-DATE without re-running. Use `--rerun-tasks` OR touch a Kotlin source file to bust the cache. CI is unaffected (fresh runner re-runs everything). Caught during Story 3.2b Phase 3. **Fix opportunity:** add `inputs.dir("$rootDir/../shared/particle-rules-fixtures")` to the test task wiring in `app/build.gradle.kts` (track as deferred work).
 
 ### Code
 
@@ -106,6 +113,8 @@ These are documented bugs / footguns that have actually bitten the project. Each
 - **Cross-platform ULID test vector (locked at Story 1.5).** `(timestamp_ms=1779458031242, random_bytes=0102030405060708090A) → "01KS7ZDFMA041061050R3GG28A"`. Both `UlidGenerator.encodeCanonical(...)` implementations (Kotlin + Swift) MUST produce byte-identical output for this input. See `shared/canonical-names.md` §3.
 - **`UlidGenerator.next()` coerces `System.currentTimeMillis() ≥ 0L`** to guard a misconfigured device clock. Don't remove the coerce — the library throws `IAE` on negative timestamps.
 - **`SafeLog.event(value)` defends `value.toString()`** via `stringifyDefensively()` — buggy caller `toString()` returns `"<toString-failed:...>"` instead of crashing the logging path.
+- **`ParticleProcessor` has null-target rules** (`kah`, `mah`). They participate in preProcess marker-tagging but emit nothing in postProcess (English doesn't need a question marker / NMT produces "as for X" naturally from pronoun + clause). `ParticleRules.applicableRules` filter ALLOWS rules with `emptyMap()` targetEquivalents through — don't tighten the filter back. Both `postProcess` passes handle the null-equivalent case explicitly.
+- **`ParticleProcessor` is variant-source-set-free** for now but `FirebaseBootstrap` is NOT — `AppCheckFactoryProvider` lives in `src/debug/` AND `src/release/` separately because `DebugAppCheckProviderFactory` is `debugImplementation` only. A naive `if (BuildConfig.DEBUG)` branch would NoClassDefFoundError at release-compile time. Pattern lives in `android/app/src/{debug,release}/java/.../firebase/AppCheckFactoryProvider.kt`.
 
 ### Convention
 
@@ -271,8 +280,8 @@ GitHub Actions free tier = 2000 minutes/month. Solo-dev PR volume <30/month × ~
 | `1-6b-ios-ci-flesh-out` | Story 1.2 | iOS CI flesh-out |
 | `1-6c-infra-ci-flesh-out` | Story 1.3 | infra CI flesh-out |
 | `1-6d-android-ci-flesh-out` | Available now; not picked up yet | Compose UI tests + Roborazzi + assembleRelease + signing-config |
-| `3-2b-particleprocessor-rule-tables` | Available; in-progress | **Phase 1 landed 2026-05-24**: kan/sih/dong/deh + helper extraction + generalized test + multi-punct cleanup. Phases 2-5 add remaining 9 TQ-1 + TQ-3/4/5/6/7/8 categories. Each phase is a small PR adding particles to the existing harness. |
-| `3-2c-particleprocessor-ios-parity` | Story 1.2 | iOS Swift mirror of `translation/particles/` + cross-platform parity test |
+| `3-2b-particleprocessor-rule-tables` | Available; in-progress | **TQ-1 COMPLETE (Phase 1+2+3 landed 2026-05-24): all 14 Indonesian discourse particles + 42 golden-file fixtures via 5 helpers** (`sentenceFinalParticle`, `formalQuestionSuffix`, `sentenceInitialDeictic`, `pronounConcessive`, `midSentenceAlso`). Phase 4 (TQ-3/4/5/6/7/8 categories — slang, Sundanese, honorifics, religious, refusals, gender-neutral) remains. Story flips to review when AC-3..AC-8 populated. |
+| `3-2c-particleprocessor-ios-parity` | Story 1.2 | iOS Swift mirror of `translation/particles/` (all 5 helpers + 14 rules + 42 fixtures) + cross-platform parity test |
 
 **If an agent is asked to start one of these, check current state in `sprint-status.yaml` first** — many have prep PRs already landed that just need activation, not from-scratch start.
 
@@ -301,7 +310,83 @@ GitHub Actions free tier = 2000 minutes/month. Solo-dev PR volume <30/month × ~
 
 This file is generated by `bmad-generate-project-context`. To add or change rules:
 
-1. Either re-invoke the skill (interactive), OR hand-edit and bump the frontmatter `generated:` date.
+1. Either re-invoke the skill (interactive), OR hand-edit and bump the frontmatter `last_updated:` date.
 2. Sections must stay LEAN — agents load this on every BMad skill activation via the `persistent_facts` glob `{project-root}/**/project-context.md`.
 3. If a rule is in `architecture.md` and easy to find there, link don't duplicate.
 4. New landmines (a future "Story 1.X Bug #N") MUST be added to §4 — that section earns its keep by preventing repeat incidents.
+5. When story status materially changes (done, in-progress, new sub-letter added), update §10 and §13 in the SAME PR as the story file change.
+
+---
+
+## 13. Remaining sessions to ship v1 (as of 2026-05-24)
+
+Started: 9 stories done (1.1, 1.5, 1.6, 1.7, 1.14a/b/c, 3.2, 3.2b-TQ1-portion). Remaining: ~79 stories in original spec + sub-letters. Estimate: **~40 Claude Code sessions** (28 Android + ~11 iOS + 1 final ship gate) plus user-side manual tasks.
+
+### Android track (Windows) — sessions in dependency order
+
+| # | Session | Stories | Dependency |
+|---|---|---|---|
+| 1 | Firebase Phase 1 wiring | 1.4 | Bania Phase 0 done |
+| 2 | Oracle infra | 1.3 | Bania Oracle Cloud setup done |
+| 3 | Pairing arc — sign-in + code exchange | 1.8, 1.9, 1.10 | Session 1 |
+| 4 | Pairing arc — persistence + identity | 1.11, 1.12, 1.13 | Session 3 |
+| 5 | Release config + Play Store Internal Testing | 1.6d + 1.4c | Session 1 |
+| 6 | Infra CI flesh-out | 1.6c | Session 2 |
+| 7 | Particle rules completion — easier | 3.2b Phase 4a (TQ-3 + TQ-6) | None |
+| 8 | Particle rules completion — harder | 3.2b Phase 4b (TQ-4 + TQ-5 + TQ-7 + TQ-8) | **Bania's girlfriend's linguistic input** for slang/Sundanese |
+| 9 | Audio calling — auth + call placement | 2.1, 2.2, 2.3 | Sessions 2 + 4 |
+| 10 | Audio calling — Android FCM + lifecycle | 2.5, 2.6, 2.7, 2.8 | Session 9 |
+| 11 | Audio calling — finish + taxonomy | 2.9, 2.10, 2.11 | Session 10 |
+| 12 | Translation — interfaces + Android ASR + VAD | 3.3, 3.4, 3.6 | Session 11 |
+| 13 | Translation — corpus + model | 3.7, 3.8 | Session 12 |
+| 14 | **⚠️ Validation gate (project's biggest risk)** | 3.9 | Session 13 + **Bania's Story 3.1 real-conversation evidence** |
+| 15 | Translation — decorator + tracing + captions | 3.10, 3.11, 3.12, 3.13 | Session 14 verdict |
+| 16 | Translation — end-to-end speaker-side | 3.14, 3.15 | Session 15 |
+| 17 | Bidirectional captions — data channel + publish/receive | 4.1, 4.2, 4.3, 4.4 | Session 16 |
+| 18 | Bidirectional captions — Sundanese + scroll + choreography + e2e | 4.5–4.9 | Session 17 |
+| 19 | E2EE — keypair + key derivation | 5.1, 5.2 | Session 18 |
+| 20 | E2EE — LiveKit Insertable Streams (hard) | 5.3 | Session 19 |
+| 21 | E2EE — indicator + privacy verification | 5.4, 5.5 | Session 20 |
+| 22 | Video calling — selector + capture + render | 6.1, 6.2, 6.3, 6.4 | Session 21 |
+| 23 | Video calling — failure tiles + controls + layout | 6.5, 6.6, 6.7, 6.8 | Session 22 |
+| 24 | Resilience — config + state machine | 7.1, 7.2 | Session 23 |
+| 25 | Resilience — UX + notification + flow + e2e | 7.3–7.7 | Session 24 |
+| 26 | Personalization — theme + background | 8.1, 8.2, 8.3, 8.4 | Session 25 |
+| 27 | Personalization — settings + transcript + editor + privacy | 8.5, 8.6, 8.7, 8.8 | Session 26 |
+| 28 | Personalization — quality review + reactions + **ship gate** | 8.9, 8.10, 8.11 | Session 27 |
+
+### iOS track (separate Claude sessions on Mac)
+
+| # | Session | Stories | Notes |
+|---|---|---|---|
+| α | iOS scaffold | 1.2 | Xcode project, SwiftUI, mirror Android design tokens |
+| β | iOS Firebase + CI | 1.4b + 1.6b | `GoogleService-Info.plist` + DeviceCheck + xcodebuild test in ios-ci.yml |
+| γ | iOS Whisper.cpp ASR | 3.5 | Compile whisper.cpp XCFramework + Swift integration |
+| δ | iOS ParticleProcessor parity | 3.2c | Mirror all 5 helpers + 14 rules + 42 fixtures in Swift + cross-platform parity test |
+| ε | iOS pairing arc (mirror Android 1.8–1.13) | Swift halves of 1.8–1.13 | Anon sign-in + paircode + X25519 + settings |
+| ζ | iOS audio calling — PushKit/CallKit | 2.4 + Swift halves of Epic 2 | iOS-specific PushKit + CallKit (different APIs than Android FCM/ConnectionService) |
+| η | iOS translation pipeline | Swift halves of Epic 3 | After Android 3.9 verdict; mirror chosen Plan A/B/C |
+| θ | iOS bidirectional captions | Swift halves of Epic 4 | Caption UI + state-priority choreography |
+| ι | iOS E2EE | Swift halves of Epic 5 | LiveKit Insertable Streams in Swift |
+| κ | iOS video calling | Swift halves of Epic 6 | SwiftUI VideoTile + camera + controls |
+| λ | iOS resilience + personalization | Swift halves of Epic 7 + 8 | LeaveAndRejoinManager + theme/settings/transcript |
+
+### User manual tasks (not Claude sessions)
+
+- **Phase 0 Firebase** (in progress) → unblocks Android Session 1
+- **Oracle Cloud setup + xaeryx.com domain** → unblocks Android Session 2 → all of Epic 2
+- **Story 3.1 — real conversation with girlfriend** → feeds Android Session 14 (validation gate) + corrects the 39 VERIFY-WITH-GIRLFRIEND fixtures
+- **Periodic linguistic review** of fixtures' `metadata.json` notes
+- **TQ-AT v1 ship gate execution** (within Android Session 28) → final go/no-go
+
+### Session pattern for fresh sessions
+
+Each fresh Claude Code session should:
+
+1. Read this file's §13 to find what's next per the dependency chain.
+2. Read `_bmad-output/implementation-artifacts/sprint-status.yaml` for current state truth.
+3. If story file exists, read it; if not, create it via `bmad-create-story` (or write manually following the Story 1.6 / 3.2b template).
+4. Implement → local validate → commit → push → PR → watch CI → pause for Bania's merge call.
+5. When Bania merges, reconcile local + report next-step options.
+
+Don't load this whole file's §13 mid-session — it's reference. The session-specific story file + sprint-status are the active surfaces.
