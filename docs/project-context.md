@@ -276,7 +276,8 @@ GitHub Actions free tier = 2000 minutes/month. Solo-dev PR volume <30/month × ~
 | `1-4-firebase-init-...` (Android) | ~~Phase 0 (manual Firebase console setup)~~ | **DONE → `review` 2026-05-24.** Phase 0 manual setup landed (Project ID `translatorrep-8d773`, Jakarta Firestore, Play Integrity linked, rules deployed). Phase 1 code wiring landed same day (plugins activated, `FirebaseBootstrap.init()` wired, `FirebaseSmokeTest` implemented + intent-extra triggered from MainActivity). Only Bania's Phase 3 device smoke test remains for `done` flip — cascades-unblocks Stories 1.8-1.13 pairing arc + entire Epic 2. |
 | `1-4b-ios-firebase-init` | Story 1.2 + 1.4 | Future iOS Claude session |
 | `1-4c-play-store-internal-testing-android` | Story 1.4 + Story 1.6d | Wires CI → signed AAB → Play Console Internal Testing track → opt-in URL (QR-able). Gives the "scan code, install via Play Store" workflow. **Renamed 2026-05-24** from `firebase-app-distribution` — Internal Testing is cleaner for native Android + validates Play Integrity end-to-end. Bania has Play Console dev account confirmed. |
-| `1-8` through `1-13` (pairing arc) | All gated on Story 1.4 (Firebase) | Cascading block — unblocks as soon as 1.4 lands |
+| `1-8-anonymous-sign-in` (Android) | Story 1.4 (Firebase) ✅ | **LANDED → `review` 2026-05-24.** Anonymous sign-in on first launch (FR-1). App-scoped `AnonymousAuthRepository` (`StateFlow<AuthState>`), `FirebaseAuthGateway` seam (unit-testable under JUnit4-only toolchain — 8 tests green), state-gated `MainActivity` (loading/ready/retry; NO login UI). X25519 keypair deferred to 1.12. detekt clean + assembleDebug green. First story of the pairing arc. |
+| `1-9` through `1-13` (pairing arc) | Story 1.8 ✅ (sign-in) → cascade | 1-9 display own code · 1-10 enter partner code · 1-11 paired persists · 1-12 X25519 identity · 1-13 settings+unpair. 1-9/1-10 carry real UX (UX-DR13/14/15). |
 | `1-6b-ios-ci-flesh-out` | Story 1.2 | iOS CI flesh-out |
 | `1-6c-infra-ci-flesh-out` | Story 1.3 | infra CI flesh-out |
 | `1-6d-android-ci-flesh-out` | ~~Available now~~ | **LANDED → `review` 2026-05-24.** Signing config (reads `app/keystore.properties` OR debug fallback) + `assembleRelease` task working locally + Compose UI instrumented-test scaffold (compiles; CI deferred — needs emulator runner) + `docs/runbooks/release-keystore-setup.md`. Roborazzi screenshot tests SPLIT OUT to new sub-story `1-6e` (Windows Skia native-graphics risk + irrelevant to QR-install path). CI release-build (real keystore via GH secret) deferred to Story 1.4c. |
@@ -329,7 +330,7 @@ Started: 9 stories done (1.1, 1.5, 1.6, 1.7, 1.14a/b/c, 3.2) + 3.2b in-progress 
 |---|---|---|---|
 | 1 | Firebase Phase 1 wiring | 1.4 | Bania Phase 0 done |
 | 2 | Oracle infra | 1.3 | Bania Oracle Cloud setup done |
-| 3 | Pairing arc — sign-in + code exchange | 1.8, 1.9, 1.10 | Session 1 |
+| 3 | Pairing arc — sign-in + code exchange | 1.8 **DONE 2026-05-24**, 1.9, 1.10 | Session 1 |
 | 4 | Pairing arc — persistence + identity | 1.11, 1.12, 1.13 | Session 3 |
 | 5 | Release config + Play Store Internal Testing | 1.6d + 1.4c | Session 1 |
 | 6 | Infra CI flesh-out | 1.6c | **DONE 2026-05-24** — decoupled from Session 2 (Oracle): lint/test/build only; ssh-deploy step deferred |
