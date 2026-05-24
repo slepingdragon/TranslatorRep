@@ -37,7 +37,7 @@
 # docs/runbooks/ios-setup-on-mac.md for the iOS handoff.
 
 generated: 2026-05-23
-last_updated: 2026-05-24T11:30  # Story 3.2b Phase 2: kok+ya+lah landed; 8/14 TQ-1 particles done; remaining 6 need new helpers (Phase 3)
+last_updated: 2026-05-24T12:15  # Story 3.2b Phase 3: TQ-1 COMPLETE (14/14 particles, 42/42 fixtures); AC-1+AC-2 done; AC-3..AC-8 remain (Phase 4+)
 project: TranslatorRep
 project_key: NOKEY
 tracking_system: file-system
@@ -88,7 +88,7 @@ development_status:
   epic-3: backlog
   3-1-pre-validation-conversation-with-girlfriend: backlog
   3-2-particleprocessor-module-golden-file-fixtures: review     # Android-only + TQ-1 loh rule + harness landed 2026-05-24
-  3-2b-particleprocessor-rule-tables: in-progress                # Phase 1+2 landed 2026-05-24: 8/14 TQ-1 particles done (loh, kan, sih, dong, deh, kok, ya, lah). Phase 3+ adds remaining 6 TQ-1 particles (kah/nih/tuh/mah/juga/also — each needs new helper) + TQ-3/4/5/6/7/8 categories. Story flips to review when all original AC rule categories populated.
+  3-2b-particleprocessor-rule-tables: in-progress                # Phase 1+2+3 landed 2026-05-24: TQ-1 COMPLETE (14/14 particles, 42/42 fixtures via 5 helpers). AC-1+AC-2+AC-9+AC-10 ✅. AC-3..AC-8 (TQ-3/4/5/6/7/8 categories: slang, Sundanese, honorifics, religious, refusals, gender) remain — Phase 4+. Story flips to review when all AC rule categories populated.
   3-2c-particleprocessor-ios-parity: backlog                     # iOS Swift mirror + cross-platform parity assertion (Mac/iOS Claude session)
   3-3-asrprovider-translationprovider-interfaces-symmetric-surface-cancellation-contract: backlog
   3-4-android-on-device-asr-provider: backlog

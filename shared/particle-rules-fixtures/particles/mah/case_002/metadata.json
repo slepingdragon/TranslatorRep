@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["mah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "TQ-3", "concessive", "topicalization", "null-target", "gender-neutral-dia"],
+  "dr_section_ref": "DR §1 (mah) + DR §6.3 (gender-neutral dia)",
+  "notes": "Concessive mah on 'dia' (gender-neutral 3rd person) → English defaults to singular 'they'. The 'selalu telat' = 'always late'. VERIFY WITH GIRLFRIEND: 'They are always late' (no 'as for them') could be more natural depending on conversational context; the mah-induced topicalization is sometimes lost in casual English."
+}

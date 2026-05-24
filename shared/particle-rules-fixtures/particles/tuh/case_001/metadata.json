@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["tuh"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "distal-deictic", "sentence-initial", "pointing-out"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (tuh distal deictic)",
+  "notes": "Sentence-initial 'tuh' points to something at distance from the speaker — 'tuh kucingnya' = 'there's the cat'. English 'There, the cat' uses the comma form (same as nih) for idempotency with our rule equivalent 'There, '. VERIFY WITH GIRLFRIEND: 'There's the cat' (contraction) reads more naturally — could change rule equivalent to 'There's ' but then we'd have grammar issues with non-subject continuations."
+}

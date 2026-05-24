@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["tuh"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "distal-deictic", "sentence-initial", "attention-direct-distant"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (tuh + di sana double-distal)",
+  "notes": "Sentence-initial 'tuh' compounded with 'di sana' (over there) — double-distal pointing. English 'There, look over there' preserves both the attention marker and the locative phrase. The repetition of 'there' feels slightly redundant in English but reflects the Indonesian's emphasis on distance. VERIFY WITH GIRLFRIEND: 'Look over there' alone might be enough; the double-'there' is a literal translation choice."
+}

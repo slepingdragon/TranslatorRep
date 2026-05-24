@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["kah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "formal-question-suffix", "null-target"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (kah formal-question suffix)",
+  "notes": "Formal-question SUFFIX 'kah' on 'apa' produces 'apakah' — strips to 'apa' + [PARTICLE:kah] in preProcess. English doesn't need a question marker (word order + `?` does the work), so target equivalent is NULL — postProcess silently strips the marker. The translation 'Do you like coffee?' comes from the NMT's own translation of the casual form 'Apa kamu suka kopi?'. VERIFY WITH GIRLFRIEND: this is one of the rare formal-register particles; in informal partner-conversation it's almost never used. Could potentially defer kah entirely if you and your girlfriend never use formal-question forms."
+}

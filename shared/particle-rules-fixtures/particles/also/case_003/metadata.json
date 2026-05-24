@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["also"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "loanword", "code-switching", "rare-usage", "sentence-final"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (also sentence-final)",
+  "notes": "Sentence-final 'also' on a desire-statement ('mau ikut' = 'want to join'). VERIFY WITH GIRLFRIEND: same rare-usage caveat — if 'also' never appears in real conversation, all 3 fixtures + the rule itself can be deleted; this rule only exists because the original Story 3.2 AC enumerated 'also' as a TQ-1 entry."
+}

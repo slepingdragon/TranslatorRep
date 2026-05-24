@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["nih"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "proximal-deictic", "sentence-initial", "offering"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (nih proximal deictic)",
+  "notes": "Sentence-initial 'nih' is an offering/presentation marker — speaker is presenting something to the listener ('nih kopinya' = 'here's your coffee'). The '-nya' on 'kopi' is definite-article-like. English 'Here, the coffee' lands the offering register; idempotency requires the comma form ('Here, X') because the rule's equivalent is 'Here, ' (comma+space prefix). VERIFY WITH GIRLFRIEND: 'Here's the coffee' (with contraction) would be more idiomatic English but breaks idempotency for our rule's literal equivalent — keeping the comma form for now."
+}

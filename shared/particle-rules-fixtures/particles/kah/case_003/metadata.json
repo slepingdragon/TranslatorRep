@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["kah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "formal-question-suffix", "null-target", "price-inquiry"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (kah on berapa)",
+  "notes": "Formal kah on 'berapa' (how much/many). The '-nya' suffix on 'harga' is a definite-article-like marker ('the price'). VERIFY WITH GIRLFRIEND: 'How much does it cost?' is more conversational English; this fixture keeps the literal 'price' since the source uses the noun explicitly."
+}

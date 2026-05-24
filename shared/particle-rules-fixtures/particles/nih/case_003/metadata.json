@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["nih"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "proximal-deictic", "sentence-initial", "gift-offering"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (nih gift-offering register)",
+  "notes": "Sentence-initial 'nih' on a gift-giving moment — 'untukmu' = 'for you' (intimate 2nd-person possessive). NMT typically expands 'untukmu' as 'this is for you' to fill the English clause shape. VERIFY WITH GIRLFRIEND: 'Here, for you' is more direct (literal); 'Here, this is for you' adds the deictic 'this' which the source doesn't have explicitly — could be wrong if the partner pair would say it more tersely."
+}

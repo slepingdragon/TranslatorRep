@@ -1,0 +1,10 @@
+{
+  "source_lang": "id-ID",
+  "target_lang": "en-US",
+  "expected_particles": ["mah"],
+  "expected_render_mode": "default",
+  "expected_translation_status": "ok",
+  "tags": ["TQ-1", "concessive", "topicalization", "null-target"],
+  "dr_section_ref": "DR §1 — Indonesian discourse particles (mah concessive after pronoun)",
+  "notes": "Concessive 'mah' after subject pronoun 'aku' creates topicalization — 'As for me, ...'. NULL target equivalent: the NMT itself produces 'As for me' naturally from the pronoun + clause structure when it sees the marker. PreProcess replaces ONLY 'mah' with marker, preserving 'Aku' for the NMT to translate as 'me'. VERIFY WITH GIRLFRIEND: 'I personally don't like coffee' is another natural English rendering; 'As for me' is more literal."
+}
