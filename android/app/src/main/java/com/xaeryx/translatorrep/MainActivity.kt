@@ -17,15 +17,22 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.xaeryx.translatorrep.firebase.FirebaseSmokeTest
 import com.xaeryx.translatorrep.pairing.AnonymousAuthRepository
 import com.xaeryx.translatorrep.pairing.AuthState
+import com.xaeryx.translatorrep.pairing.PairingCodeAllocator
+import com.xaeryx.translatorrep.pairing.PairingCodeGenerator
+import com.xaeryx.translatorrep.pairing.PairingFirestoreRepository
+import com.xaeryx.translatorrep.pairing.PairingViewModel
+import com.xaeryx.translatorrep.pairing.ui.PairedEmptyScreen
 import com.xaeryx.translatorrep.ui.components.GlassIntensity
 import com.xaeryx.translatorrep.ui.components.MonochromeGlassPanel
 import com.xaeryx.translatorrep.ui.theme.TextPrimary
@@ -64,13 +71,18 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
                 ) {
-                    val authState by authRepository.state.collectAsStateWithLifecycle()
-                    AuthGateScreen(
-                        authState = authState,
-                        // Retry is only reachable from AuthState.Failed, so this never
-                        // races the Application-scope ensureSignedIn() call.
-                        onRetry = { lifecycleScope.launch { authRepository.ensureSignedIn() } },
-                    )
+                    when (val state = authRepository.state.collectAsStateWithLifecycle().value) {
+                        // Story 1.9: once signed in, the Paired-Empty home is the
+                        // destination (Story 1.11 will branch to the Paired home when
+                        // already paired).
+                        is AuthState.SignedIn -> PairedEmptyRoute(ownerUid = state.uid)
+                        else -> AuthGateScreen(
+                            authState = state,
+                            // Retry is only reachable from AuthState.Failed, so this never
+                            // races the Application-scope ensureSignedIn() call.
+                            onRetry = { lifecycleScope.launch { authRepository.ensureSignedIn() } },
+                        )
+                    }
                 }
             }
         }
@@ -97,9 +109,31 @@ class MainActivity : ComponentActivity() {
 }
 
 /**
+ * Story 1.9 Paired-Empty home route. Builds [PairingViewModel] with the signed-in UID and a
+ * Firestore-backed allocator, then renders [PairedEmptyScreen]. Manual construction (no DI
+ * framework) — consistent with [TranslatorRepApplication.authRepository].
+ */
+@Composable
+private fun PairedEmptyRoute(ownerUid: String) {
+    val pairingViewModel: PairingViewModel = viewModel(
+        factory = remember(ownerUid) {
+            PairingViewModel.Factory(
+                ownerUid = ownerUid,
+                allocator = PairingCodeAllocator(
+                    generator = PairingCodeGenerator(),
+                    codeStore = PairingFirestoreRepository(),
+                ),
+            )
+        },
+    )
+    PairedEmptyScreen(viewModel = pairingViewModel)
+}
+
+/**
  * Renders the current [AuthState] inside the Theme-A monochrome-glass panel. The
  * "TranslatorRep" wordmark is always present; the body below it reflects the state.
- * No state shows a login/signup form (FR-1).
+ * No state shows a login/signup form (FR-1). The [AuthState.SignedIn] branch is a fallback
+ * (previews); in the running app MainActivity routes SignedIn to [PairedEmptyRoute].
  */
 @Composable
 private fun AuthGateScreen(authState: AuthState, onRetry: () -> Unit) {
