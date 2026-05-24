@@ -1,0 +1,34 @@
+package com.xaeryx.translatorrep.call.callSession
+
+import com.xaeryx.translatorrep.call.CallType
+import com.xaeryx.translatorrep.logging.AllowedLogKey
+import com.xaeryx.translatorrep.logging.SafeLog
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.onEach
+
+/**
+ * The orchestration layer between the UI and the realtime/translation providers (architecture
+ * Patterns §1 + §13). `CallSession` owns the [RoomManager] (LiveKit room lifecycle) and, in
+ * later stories, the ASR/Translation flow and caption state — it is the single seam every
+ * call-time feature (captions Epic 3/4, E2EE Epic 5, video Epic 6, leave-and-rejoin Epic 7)
+ * plugs into. The UI observes [startCall]; it never touches LiveKit/providers directly.
+ *
+ * Story 2.2 establishes the seam; [startCall] delegates to [RoomManager.connect] (a scaffold
+ * until Story 2.3 wires the real connection) and logs each [RoomState] transition.
+ */
+class CallSession(
+    private val roomManager: RoomManager,
+    private val logEvent: (AllowedLogKey, Any) -> Unit = SafeLog::event,
+) {
+
+    /**
+     * Start a Call of [callType] and observe its [RoomState] until it ends. Returns the room's
+     * state stream (no separate "connecting" state — the In-Call screen treats pre-[RoomState.ACTIVE]
+     * as connecting). Each transition is logged via [AllowedLogKey.ROOM_STATE].
+     */
+    fun startCall(callType: CallType): Flow<RoomState> =
+        roomManager.connect(callType).onEach { logEvent(AllowedLogKey.ROOM_STATE, it.wireName) }
+
+    /** End the current Call (Story 2.8). */
+    suspend fun endCall() = roomManager.disconnect()
+}
