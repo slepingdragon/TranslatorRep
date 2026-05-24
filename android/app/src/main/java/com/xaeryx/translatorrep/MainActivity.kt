@@ -80,9 +80,14 @@ class MainActivity : ComponentActivity() {
                         // home; Unknown → brief loading on cold launch. The /pairs listener
                         // also drives the immediate post-pair transition (Story 1.10).
                         is AuthState.SignedIn -> {
-                            val pairingRepository =
-                                (application as TranslatorRepApplication).pairingStatusRepository
-                            LaunchedEffect(state.uid) { pairingRepository.start(state.uid) }
+                            val app = application as TranslatorRepApplication
+                            val pairingRepository = app.pairingStatusRepository
+                            LaunchedEffect(state.uid) {
+                                pairingRepository.start(state.uid)
+                                // Story 1.12: ensure the X25519 identity keypair exists +
+                                // its public half is published (ADR-A2). Fire-and-forget.
+                                app.identityRepository.start(state.uid)
+                            }
                             when (
                                 val pairing =
                                     pairingRepository.status.collectAsStateWithLifecycle().value
