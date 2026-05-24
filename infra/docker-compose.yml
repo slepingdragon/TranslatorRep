@@ -1,0 +1,103 @@
+# TranslatorRep — Oracle VM Docker Compose stack.
+# Owning story: 1-3-oracle-vm-livekit-docker-compose-stack-domain.
+# Architecture: ADR-A1 (Oracle ARM A1) + ADR-C1 (auth-proxy on Oracle) + ADR-C2 (App Check verification).
+#
+# Four services:
+#   - livekit-server:   WebRTC SFU (signaling + media)
+#   - redis:            LiveKit's state backend (intra-compose only; no host port)
+#   - caddy:            TLS termination + reverse proxy (Let's Encrypt auto-cert)
+#   - auth-proxy:       LiveKit JWT minting + Firebase Admin SDK App Check verification
+#
+# Deploy from your laptop via `infra/deploy.sh` after Bania's Story 1.3 Phase 0
+# (Oracle VM provisioning + Cloudflare DNS for sfu.xaeryx.com) is complete.
+
+services:
+  livekit-server:
+    image: livekit/livekit-server:v1.7  # ARM-compatible multi-arch (Oracle Ampere A1 = ARM64)
+    container_name: translatorrep-livekit
+    restart: unless-stopped
+    command: --config /etc/livekit.yaml
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+    network_mode: host
+    # network_mode: host is REQUIRED for WebRTC media — LiveKit binds 50000-60000/udp
+    # for ICE/TURN and the Linux kernel handles UDP NAT differently than Docker's bridge
+    # network. With bridge networking, ICE candidate gathering returns the container's
+    # internal IP which clients can't reach.
+    depends_on:
+      - redis
+    environment:
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY}: ${LIVEKIT_API_SECRET}"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:7880/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine  # ARM-compatible multi-arch
+    container_name: translatorrep-redis
+    restart: unless-stopped
+    # No host port exposed — only livekit-server talks to redis, both via host networking.
+    # Bind to 127.0.0.1 inside the container so external connections are refused even
+    # if the firewall is misconfigured.
+    command: ["redis-server", "--bind", "127.0.0.1", "--protected-mode", "yes"]
+    network_mode: host
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  caddy:
+    image: caddy:2-alpine  # ARM-compatible multi-arch
+    container_name: translatorrep-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data        # ACME cert storage — survives container restarts
+      - caddy_config:/config
+    depends_on:
+      - livekit-server
+      - auth-proxy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost/v1/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  auth-proxy:
+    # TODO Story 1.3 Phase 1b: implement Node.js + TypeScript service per
+    # shared/auth-proxy-api.md. This service block IS pre-configured for the
+    # expected shape; just the `./auth-proxy/` directory contents need to be
+    # written (Dockerfile + src/ + package.json + tests). Fresh Claude session
+    # picks this up — see Story 1.3 Phase 1b in the story file.
+    build:
+      context: ./auth-proxy
+      dockerfile: Dockerfile
+    container_name: translatorrep-authproxy
+    restart: unless-stopped
+    expose:
+      - "3000"  # Internal only — Caddy reverse-proxies from sfu.xaeryx.com/v1/*
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
+      LIVEKIT_WS_URL: wss://sfu.xaeryx.com
+      FIREBASE_PROJECT_ID: translatorrep-8d773
+      # Service account JSON, base64-encoded to fit one line in .env.
+      # Generated from Firebase console → Project settings → Service accounts.
+      FIREBASE_SERVICE_ACCOUNT_JSON_BASE64: ${FIREBASE_SERVICE_ACCOUNT_JSON_BASE64}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:3000/v1/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  caddy_data:
+  caddy_config:

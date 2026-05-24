@@ -1,0 +1,53 @@
+# LiveKit Server configuration.
+# Reference: https://docs.livekit.io/realtime/self-hosting/deployment/
+#
+# Key decisions for TranslatorRep v1:
+#   - Single-node deployment (no horizontal scaling) — 2-user audience.
+#   - Redis required even for single-node (LiveKit state machine).
+#   - Embedded TURN server (no separate coturn) — simpler ops.
+#   - Port ranges match infra/docker-compose.yml + Oracle Network Security List
+#     entries from docs/runbooks/oracle-vm-setup.md §1.6.
+
+port: 7880                          # Signaling WebSocket (proxied by Caddy under TLS)
+bind_addresses:
+  - "0.0.0.0"
+
+rtc:
+  tcp_port: 7881                    # Fallback TCP for restrictive NATs
+  port_range_start: 50000           # UDP ICE/media range
+  port_range_end: 60000
+  use_external_ip: true             # Discover public IP via STUN; needed because we
+                                    # use host networking but LiveKit still needs to know
+                                    # what IP to advertise in ICE candidates.
+
+# Embedded TURN — clients use TURN/UDP at 7882 as a fallback when ICE direct fails.
+turn:
+  enabled: true
+  udp_port: 7882
+  external_tls: false               # Caddy handles TLS at 443; TURN/UDP doesn't need cert.
+
+# Redis state backend.
+redis:
+  address: 127.0.0.1:6379           # host networking → talks to redis on the VM directly
+
+# API keys — embedded via env-var indirection by docker-compose.yml
+# (`LIVEKIT_KEYS: "${LIVEKIT_API_KEY}: ${LIVEKIT_API_SECRET}"`). The auth-proxy
+# uses these same credentials to mint JWTs. Generate via `livekit-server generate-keys`
+# or any random 32-char strings (alpha-numeric, no special chars per LiveKit spec).
+# Do NOT hardcode keys here — they live in infra/.env (gitignored).
+
+# Logging — JSON to stdout (Docker captures); Oracle VM tail via `docker logs -f livekit-server`.
+logging:
+  json: true
+  level: info
+
+# Room defaults — match architecture §"LiveKit Insertable Streams" + Epic 7 resilience spec.
+room:
+  enabled_codecs:
+    - mime: audio/opus              # Primary audio codec
+    - mime: video/VP8               # v1 video codec (Epic 6); harmless if no video calls happen
+  empty_timeout: 300                # 5 min — matches Epic 7 leave-and-rejoin spec (Story 7.1)
+  departure_timeout: 20             # Mark participant gone after 20s of disconnect
+  max_participants: 2               # Pair = exactly 2; reject any 3rd join
+
+# Recording / webhooks not used in v1.

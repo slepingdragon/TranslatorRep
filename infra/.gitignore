@@ -1,0 +1,10 @@
+# Real env file — contains LiveKit keys + Firebase service account JSON.
+.env
+
+# Auth-proxy build artifacts (Phase 1b).
+auth-proxy/node_modules/
+auth-proxy/dist/
+
+# Caddy data — local-only; only exists on the Oracle VM in volumes.
+caddy_data/
+caddy_config/
