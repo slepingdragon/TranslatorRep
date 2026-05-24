@@ -10,16 +10,22 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.xaeryx.translatorrep.firebase.FirebaseSmokeTest
+import com.xaeryx.translatorrep.pairing.AnonymousAuthRepository
+import com.xaeryx.translatorrep.pairing.AuthState
 import com.xaeryx.translatorrep.ui.components.GlassIntensity
 import com.xaeryx.translatorrep.ui.components.MonochromeGlassPanel
 import com.xaeryx.translatorrep.ui.theme.TextPrimary
@@ -30,14 +36,18 @@ import kotlinx.coroutines.launch
 private const val FIREBASE_SMOKE_EXTRA = "firebase-smoke"
 
 /**
- * Story 1.1 hello-world host. Renders a single `MonochromeGlassPanel` to
- * validate that the Theme A monochrome-glass primitive is wired
- * end-to-end. Story 1.2 (Android, but really Story 1.8) replaces this with
- * the actual Paired-Empty home + pairing flow.
+ * Host activity. Story 1.8 turns this into the anonymous-sign-in gate: it observes
+ * [AnonymousAuthRepository.state] (sign-in is kicked off in
+ * [TranslatorRepApplication.onCreate]) and renders a branded loading surface until a
+ * stable UID is established — never a login/signup form (FR-1). On a returning launch the
+ * cached Firebase session resolves to [AuthState.SignedIn] immediately, so the loading
+ * surface is effectively invisible.
  *
- * Story 1.4 AC-5 smoke-test trigger lives here behind a debug + intent-extra
- * gate (see [maybeTriggerFirebaseSmokeTest]). Production sign-in flow lands
- * in Story 1.8.
+ * Story 1.9 replaces the [AuthState.SignedIn] branch with the real Paired-Empty home
+ * (pairing-code display + partner-code input).
+ *
+ * Story 1.4 AC-5 smoke-test trigger still lives here behind a debug + intent-extra gate
+ * (see [maybeTriggerFirebaseSmokeTest]).
  */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,13 +55,22 @@ class MainActivity : ComponentActivity() {
         // Edge-to-edge per UX spec — In-Call surfaces use the full screen.
         enableEdgeToEdge()
         maybeTriggerFirebaseSmokeTest()
+
+        val authRepository = (application as TranslatorRepApplication).authRepository
+
         setContent {
             TranslatorRepTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
                 ) {
-                    HelloWorldGlassPanelScreen()
+                    val authState by authRepository.state.collectAsStateWithLifecycle()
+                    AuthGateScreen(
+                        authState = authState,
+                        // Retry is only reachable from AuthState.Failed, so this never
+                        // races the Application-scope ensureSignedIn() call.
+                        onRetry = { lifecycleScope.launch { authRepository.ensureSignedIn() } },
+                    )
                 }
             }
         }
@@ -61,8 +80,7 @@ class MainActivity : ComponentActivity() {
      * Story 1.4 AC-5: kick off [FirebaseSmokeTest.runOnce] when the activity
      * is started with `--es firebase-smoke true` (debug builds only). Used
      * for the one-shot validation that anon sign-in + Firestore rules work
-     * end-to-end against the real Firebase project. Production sign-in is
-     * Story 1.8.
+     * end-to-end against the real Firebase project.
      *
      * Trigger from adb:
      * ```
@@ -78,8 +96,13 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/**
+ * Renders the current [AuthState] inside the Theme-A monochrome-glass panel. The
+ * "TranslatorRep" wordmark is always present; the body below it reflects the state.
+ * No state shows a login/signup form (FR-1).
+ */
 @Composable
-private fun HelloWorldGlassPanelScreen() {
+private fun AuthGateScreen(authState: AuthState, onRetry: () -> Unit) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
@@ -91,18 +114,44 @@ private fun HelloWorldGlassPanelScreen() {
             Column(
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Text(
                     text = "TranslatorRep",
                     style = MaterialTheme.typography.titleLarge,
                     color = TextPrimary,
                 )
-                Text(
-                    text = "Scaffold ready — Story 1.1 done.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary,
-                )
+                when (authState) {
+                    AuthState.SigningIn -> {
+                        CircularProgressIndicator(color = TextPrimary)
+                        Text(
+                            text = "Getting things ready…",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondary,
+                        )
+                    }
+
+                    is AuthState.SignedIn -> {
+                        // Placeholder home — Story 1.9 replaces this with the
+                        // Paired-Empty home (pairing-code display + partner input).
+                        Text(
+                            text = "You're all set.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondary,
+                        )
+                    }
+
+                    is AuthState.Failed -> {
+                        Text(
+                            text = "Couldn't connect. Check your internet and try again.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondary,
+                        )
+                        Button(onClick = onRetry) {
+                            Text("Try again")
+                        }
+                    }
+                }
             }
         }
     }
@@ -110,10 +159,30 @@ private fun HelloWorldGlassPanelScreen() {
 
 @Preview(showBackground = true, backgroundColor = 0xFF0A0A0B)
 @Composable
-private fun HelloWorldPreview() {
+private fun AuthGateSigningInPreview() {
     TranslatorRepTheme {
         Box(modifier = Modifier.background(MaterialTheme.colorScheme.background)) {
-            HelloWorldGlassPanelScreen()
+            AuthGateScreen(authState = AuthState.SigningIn, onRetry = {})
+        }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF0A0A0B)
+@Composable
+private fun AuthGateSignedInPreview() {
+    TranslatorRepTheme {
+        Box(modifier = Modifier.background(MaterialTheme.colorScheme.background)) {
+            AuthGateScreen(authState = AuthState.SignedIn(uid = "preview-uid"), onRetry = {})
+        }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF0A0A0B)
+@Composable
+private fun AuthGateFailedPreview() {
+    TranslatorRepTheme {
+        Box(modifier = Modifier.background(MaterialTheme.colorScheme.background)) {
+            AuthGateScreen(authState = AuthState.Failed(reason = "UnknownHostException"), onRetry = {})
         }
     }
 }
