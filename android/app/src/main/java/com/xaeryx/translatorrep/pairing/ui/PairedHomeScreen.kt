@@ -1,11 +1,13 @@
 package com.xaeryx.translatorrep.pairing.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
@@ -27,6 +29,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.xaeryx.translatorrep.ui.components.GlassIntensity
 import com.xaeryx.translatorrep.ui.components.MonochromeGlassPanel
@@ -37,17 +41,18 @@ import com.xaeryx.translatorrep.ui.theme.TextTertiary
 import com.xaeryx.translatorrep.ui.theme.TranslatorRepTheme
 
 /**
- * Paired home (Story 1.13 adds the Settings entry + Unpair). The real Paired home — partner
- * styling + the audio/video Call button — is Story 2.2; this remains a thin placeholder body
- * with a top-right Settings gear (UX-DR35) that opens the Settings sheet.
+ * Paired home (Story 2.2). Partner display name centered at top; a single prominent "Call"
+ * pill centered below it (UX-DR38 — filled glass pill, ≥48dp, full text-primary label). v1
+ * places an Audio Call (the two-button `CallTypeSelector` arrives in Epic 6). A top-right
+ * Settings gear (UX-DR35, Story 1.13) opens the Settings sheet with two-tap-confirm Unpair.
  *
- * [onUnpair] is fire-and-forget (the caller deletes `/pairs` + clears local state via
- * `PairingStatusRepository.unpair`, which flips app status to Unpaired → re-routes to the
- * Paired-Empty home).
+ * The real In-Call screen is Story 2.7; the actual LiveKit connection is Story 2.3. [onCall]
+ * starts the Call via `CallSession.startCall(.audio)` (wired in MainActivity).
  */
 @Composable
 fun PairedHomeScreen(
     partnerName: String,
+    onCall: () -> Unit,
     onUnpair: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -58,31 +63,19 @@ fun PairedHomeScreen(
             .fillMaxSize()
             .statusBarsPadding(),
     ) {
-        Column(
+        Text(
+            text = partnerName,
+            style = MaterialTheme.typography.titleLarge,
+            color = TextPrimary,
             modifier = Modifier
-                .align(Alignment.Center)
-                .padding(horizontal = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            MonochromeGlassPanel(intensity = GlassIntensity.Regular) {
-                Column(
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Text(
-                        text = "Paired with $partnerName",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = TextPrimary,
-                    )
-                    Text(
-                        text = "Calling arrives next.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary,
-                    )
-                }
-            }
-        }
+                .align(Alignment.TopCenter)
+                .padding(top = 48.dp),
+        )
+
+        CallButton(
+            onCall = onCall,
+            modifier = Modifier.align(Alignment.Center),
+        )
 
         IconButton(
             onClick = { showSettings = true },
@@ -110,9 +103,33 @@ fun PairedHomeScreen(
     }
 }
 
+/** UX-DR38 primary action — a filled monochrome-glass pill. */
+@Composable
+private fun CallButton(onCall: () -> Unit, modifier: Modifier = Modifier) {
+    MonochromeGlassPanel(
+        intensity = GlassIntensity.Thick,
+        cornerRadius = 100.dp,
+        modifier = modifier
+            .heightIn(min = 56.dp)
+            .clickable(onClick = onCall)
+            .semantics { contentDescription = "Call" },
+    ) {
+        Box(
+            modifier = Modifier.padding(horizontal = 56.dp, vertical = 18.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "Call",
+                style = MaterialTheme.typography.titleLarge,
+                color = TextPrimary,
+            )
+        }
+    }
+}
+
 /**
- * Settings bottom sheet (UX-DR35). Contains the two-tap-confirm "Unpair from {partner}" action
- * plus a placeholder section for future Settings items (Epic 8).
+ * Settings bottom sheet (UX-DR35). Two-tap-confirm "Unpair from {partner}" + a placeholder
+ * section for future Settings items (Epic 8).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -138,7 +155,6 @@ private fun SettingsSheet(
             )
 
             if (!confirming) {
-                // First tap: arm the confirmation (two-tap unpair).
                 TextButton(
                     onClick = { confirming = true },
                     modifier = Modifier.fillMaxWidth(),
@@ -162,7 +178,6 @@ private fun SettingsSheet(
                     ) {
                         Text("Cancel")
                     }
-                    // Second tap: confirm.
                     Button(
                         onClick = onUnpair,
                         colors = ButtonDefaults.buttonColors(containerColor = StateRed),
@@ -175,7 +190,6 @@ private fun SettingsSheet(
 
             HorizontalDivider()
 
-            // Placeholder for Epic 8 settings (theme, display name, privacy, transcript history).
             Text(
                 text = "More settings coming soon.",
                 style = MaterialTheme.typography.labelSmall,
@@ -189,6 +203,6 @@ private fun SettingsSheet(
 @Composable
 private fun PairedHomePreview() {
     TranslatorRepTheme {
-        PairedHomeScreen(partnerName = "Ayu", onUnpair = {})
+        PairedHomeScreen(partnerName = "Ayu", onCall = {}, onUnpair = {})
     }
 }

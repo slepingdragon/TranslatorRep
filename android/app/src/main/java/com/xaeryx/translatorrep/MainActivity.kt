@@ -18,7 +18,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,6 +28,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.xaeryx.translatorrep.call.callSession.CallSession
+import com.xaeryx.translatorrep.call.livekit.LiveKitRoomManager
+import com.xaeryx.translatorrep.call.ui.CallConnectingScreen
 import com.xaeryx.translatorrep.firebase.FirebaseSmokeTest
 import com.xaeryx.translatorrep.pairing.AnonymousAuthRepository
 import com.xaeryx.translatorrep.pairing.AuthState
@@ -95,10 +100,8 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 PairingStatus.Unknown -> PairingLoadingGate()
                                 PairingStatus.Unpaired -> PairedEmptyRoute(ownerUid = state.uid)
-                                is PairingStatus.Paired -> PairedHomeScreen(
+                                is PairingStatus.Paired -> PairedRoute(
                                     partnerName = pairing.partnerName,
-                                    // Story 1.13: unpair deletes /pairs + clears local state,
-                                    // flipping status to Unpaired → re-routes to Paired-Empty.
                                     onUnpair = {
                                         pairingRepository.unpair(state.uid, pairing.pairId)
                                     },
@@ -160,8 +163,31 @@ private fun PairedEmptyRoute(ownerUid: String) {
     )
     // No explicit onPaired navigation: creating /pairs makes the app-wide
     // PairingStatusRepository listener fire (Firestore echoes the local write), flipping
-    // status to Paired, which re-routes MainActivity to PairedHomePlaceholder.
+    // status to Paired, which re-routes MainActivity to PairedRoute.
     PairedEmptyScreen(viewModel = pairingViewModel)
+}
+
+/**
+ * Paired destination (Story 2.2): the Paired home with the Call button, toggling into the
+ * (scaffold) in-call screen when Call is tapped. The `CallSession` is the orchestration seam
+ * (owns the LiveKit room lifecycle; Story 2.3 wires the real connection).
+ */
+@Composable
+private fun PairedRoute(partnerName: String, onUnpair: () -> Unit) {
+    var inCall by remember { mutableStateOf(false) }
+    val callSession = remember { CallSession(LiveKitRoomManager()) }
+
+    if (inCall) {
+        CallConnectingScreen(callSession = callSession, onEnd = { inCall = false })
+    } else {
+        PairedHomeScreen(
+            partnerName = partnerName,
+            onCall = { inCall = true },
+            // Story 1.13: unpair deletes /pairs + clears local state, flipping status to
+            // Unpaired → re-routes to the Paired-Empty home.
+            onUnpair = onUnpair,
+        )
+    }
 }
 
 /** Brief loading gate while pairing status resolves on cold launch (Story 1.11). */
