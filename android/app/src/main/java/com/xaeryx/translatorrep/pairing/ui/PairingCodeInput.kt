@@ -31,7 +31,7 @@ import com.xaeryx.translatorrep.ui.theme.TextPrimary
 import com.xaeryx.translatorrep.ui.theme.TextTertiary
 import com.xaeryx.translatorrep.ui.theme.TranslatorRepTheme
 
-private const val PLACEHOLDER_DASHES = "—  —  —  —  —  —"
+private const val PLACEHOLDER_DASHES = "– – – – – –"
 
 /**
  * `PairingCodeInput` (UX-DR13) — partner's-code entry, foregrounded above the own-code
@@ -98,6 +98,8 @@ fun PairingCodeInput(
                                 text = PLACEHOLDER_DASHES,
                                 style = MaterialTheme.typography.displayLarge,
                                 color = TextTertiary,
+                                maxLines = 1,
+                                softWrap = false, // keep all six slots on one line
                             )
                         }
                         innerTextField()
