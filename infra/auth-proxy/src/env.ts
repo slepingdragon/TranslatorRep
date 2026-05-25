@@ -30,6 +30,13 @@ const envSchema = z.object({
     // access to Firestore /pairs/{pairId} and the ability to verify ID +
     // App Check tokens server-side.
     FIREBASE_SERVICE_ACCOUNT_JSON_BASE64: z.string().min(1, "FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 required"),
+
+    // When "false", /v1/token SKIPS App Check verification (it still requires a
+    // valid Firebase ID token — i.e. a real signed-in user). Set to "false" on
+    // Render during dev/testing so debug builds don't need a per-device App Check
+    // debug token registered. Default "true" = production-safe (device attestation
+    // enforced). See docs/runbooks/livekit-cloud-render-setup.md.
+    APP_CHECK_ENFORCED: z.enum(["true", "false"]).default("true").transform((v) => v === "true"),
 });
 
 export type Env = z.infer<typeof envSchema>;

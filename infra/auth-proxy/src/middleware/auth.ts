@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { getEnv } from "../env.js";
 import { firebaseApp } from "../firebaseAdmin.js";
 import { logger } from "../lib/logger.js";
 import { ApiError, ErrorCode, type AuthContext } from "../types.js";
@@ -28,13 +29,16 @@ export async function authMiddleware(req: Request, _res: Response, next: NextFun
         return;
     }
     const app = firebaseApp();
+    const enforceAppCheck = getEnv().APP_CHECK_ENFORCED;
 
     try {
         // Run both verifications in parallel — neither depends on the other,
-        // and saves ~50-100ms of round-trip on each request.
+        // and saves ~50-100ms of round-trip on each request. When App Check
+        // enforcement is off (dev/testing), the second slot resolves to null
+        // and is never checked — the Firebase ID token is always verified.
         const [idTokenResult, appCheckResult] = await Promise.allSettled([
             app.auth().verifyIdToken(body.firebaseIdToken),
-            app.appCheck().verifyToken(body.appCheckToken),
+            enforceAppCheck ? app.appCheck().verifyToken(body.appCheckToken) : Promise.resolve(null),
         ]);
 
         if (idTokenResult.status === "rejected") {
@@ -43,7 +47,7 @@ export async function authMiddleware(req: Request, _res: Response, next: NextFun
             next(new ApiError(ErrorCode.FirebaseTokenInvalid, 401));
             return;
         }
-        if (appCheckResult.status === "rejected") {
+        if (enforceAppCheck && appCheckResult.status === "rejected") {
             const reason = appCheckResult.reason instanceof Error ? appCheckResult.reason.message : String(appCheckResult.reason);
             logger.info({ outcome: ErrorCode.AppCheckInvalid, reason }, "app check verification failed");
             next(new ApiError(ErrorCode.AppCheckInvalid, 401));
