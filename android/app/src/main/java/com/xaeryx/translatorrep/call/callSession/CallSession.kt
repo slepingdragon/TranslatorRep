@@ -1,9 +1,13 @@
 package com.xaeryx.translatorrep.call.callSession
 
+import com.xaeryx.translatorrep.call.AudioRoute
 import com.xaeryx.translatorrep.call.CallType
 import com.xaeryx.translatorrep.logging.AllowedLogKey
 import com.xaeryx.translatorrep.logging.SafeLog
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onEach
 
 /**
@@ -21,14 +25,38 @@ class CallSession(
     private val logEvent: (AllowedLogKey, Any) -> Unit = SafeLog::event,
 ) {
 
+    /** Mic mute state for the In-Call screen (Story 2.7). Each new call starts unmuted. */
+    private val _muted = MutableStateFlow(false)
+    val muted: StateFlow<Boolean> = _muted.asStateFlow()
+
     /**
      * Start a Call of [callType] with the partner [peerUid] and observe its [RoomState] until it
      * ends. Returns the room's state stream (no separate "connecting" state — the In-Call screen
      * treats pre-[RoomState.ACTIVE] as connecting). Each transition is logged via
      * [AllowedLogKey.ROOM_STATE].
      */
-    fun startCall(callType: CallType, peerUid: String): Flow<RoomState> =
-        roomManager.connect(callType, peerUid).onEach { logEvent(AllowedLogKey.ROOM_STATE, it.wireName) }
+    fun startCall(callType: CallType, peerUid: String): Flow<RoomState> {
+        _muted.value = false // a fresh call always begins with the mic live
+        return roomManager.connect(callType, peerUid).onEach { logEvent(AllowedLogKey.ROOM_STATE, it.wireName) }
+    }
+
+    /**
+     * Toggle the microphone (Story 2.7). Disables the mic FIRST, then flips the exposed [muted]
+     * state — so a failed SDK call doesn't leave the UI lying about a mic that's still live.
+     * Returns the new muted state.
+     */
+    suspend fun toggleMute(): Boolean {
+        val next = !_muted.value
+        roomManager.setMicrophoneEnabled(!next)
+        _muted.value = next
+        return next
+    }
+
+    /** Audio output route stream (Story 2.9) — what the In-Call routing toggle reflects. */
+    val audioRoute: Flow<AudioRoute> get() = roomManager.audioRoute
+
+    /** Cycle the audio output route (earpiece → speaker → BT/wired when available). */
+    fun cycleAudioRoute() = roomManager.cycleAudioRoute()
 
     /** End the current Call (Story 2.8). */
     suspend fun endCall() = roomManager.disconnect()

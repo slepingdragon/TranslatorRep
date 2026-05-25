@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -49,12 +50,43 @@ class CallSessionTest {
         assertTrue(manager.disconnected)
     }
 
+    @Test
+    fun `toggleMute flips muted state and disables then re-enables the mic`() = runBlocking {
+        val manager = FakeRoomManager(emptyFlow())
+        val session = CallSession(manager) { _, _ -> }
+
+        assertFalse(session.muted.value)
+
+        assertTrue(session.toggleMute()) // returns the new state = muted
+        assertTrue(session.muted.value)
+        assertEquals(false, manager.micEnabled) // muted → mic disabled
+
+        assertFalse(session.toggleMute()) // back to unmuted
+        assertFalse(session.muted.value)
+        assertEquals(true, manager.micEnabled) // unmuted → mic re-enabled
+    }
+
+    @Test
+    fun `startCall resets mute so every call begins with a live mic`() = runBlocking {
+        val manager = FakeRoomManager(emptyFlow())
+        val session = CallSession(manager) { _, _ -> }
+
+        session.toggleMute()
+        assertTrue(session.muted.value)
+
+        session.startCall(CallType.AUDIO, PEER_UID)
+
+        assertFalse(session.muted.value)
+    }
+
     private class FakeRoomManager(private val states: Flow<RoomState>) : RoomManager {
         var connectedWith: CallType? = null
             private set
         var connectedPeerUid: String? = null
             private set
         var disconnected = false
+            private set
+        var micEnabled: Boolean? = null
             private set
 
         override fun connect(callType: CallType, peerUid: String): Flow<RoomState> {
@@ -65,6 +97,10 @@ class CallSessionTest {
 
         override suspend fun disconnect() {
             disconnected = true
+        }
+
+        override suspend fun setMicrophoneEnabled(enabled: Boolean) {
+            micEnabled = enabled
         }
     }
 

@@ -1,7 +1,9 @@
 package com.xaeryx.translatorrep.call.callSession
 
+import com.xaeryx.translatorrep.call.AudioRoute
 import com.xaeryx.translatorrep.call.CallType
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 /**
  * The fake-able seam that owns the underlying realtime room (architecture Patterns §13: UI
@@ -21,4 +23,22 @@ interface RoomManager {
 
     /** Leave + tear down the room (Story 2.8 end-call / Epic 7 lifecycle). */
     suspend fun disconnect()
+
+    /**
+     * Enable/disable the local microphone track (Story 2.7 mute control). Default no-op so
+     * in-memory fakes don't need to implement it; [com.xaeryx.translatorrep.call.livekit.LiveKitRoomManager]
+     * overrides it to flip the LiveKit local-participant mic. Safe to call before/after the
+     * room exists — a missing room is a silent no-op (the next call re-publishes anyway).
+     */
+    suspend fun setMicrophoneEnabled(enabled: Boolean) {}
+
+    /**
+     * Current audio output route (Story 2.9). Default emits [AudioRoute.EARPIECE] so in-memory
+     * fakes need no implementation; [com.xaeryx.translatorrep.call.livekit.LiveKitRoomManager]
+     * overrides it to reflect LiveKit's `AudioSwitchHandler` selected device.
+     */
+    val audioRoute: Flow<AudioRoute> get() = flowOf(AudioRoute.EARPIECE)
+
+    /** Cycle output to the next available route (earpiece ⇄ speaker, + BT/wired when present). */
+    fun cycleAudioRoute() {}
 }

@@ -39,6 +39,9 @@ val StateAmber = Color(0xFFB8860B)
 /** Mic-active dot, recording-state pulse. Muted red. */
 val StateRed = Color(0xFFB85450)
 
+/** Accept / answer affordance (incoming call). Muted green, matched in tone to [StateRed]. */
+val StateGreen = Color(0xFF4E8D5B)
+
 // ---------------------------------------------------------------------------
 // Theme C — Custom image background (Epic 8). Token overrides below load
 // when ThemePicker selects Image; the user-chosen image replaces SurfaceBase.
