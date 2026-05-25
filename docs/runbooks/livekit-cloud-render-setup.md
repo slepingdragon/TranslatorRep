@@ -51,8 +51,18 @@ You already generated this for the app, but the auth-proxy needs it base64'd as 
    - `LIVEKIT_API_KEY` = from A1.4
    - `LIVEKIT_API_SECRET` = from A1.4
    - `FIREBASE_SERVICE_ACCOUNT_JSON_BASE64` = from A2
-4. **Apply / Create** → Render builds the Docker image and deploys. (Plan is `starter` = always-on; change to `free` in the dashboard if you'd rather — works, but cold-starts after idle.)
+4. **Apply / Create** → Render builds the Docker image and deploys. Plan is **`free`** ($0). (If you ever want zero-fuss always-on instead of the keep-alive ping below, change Instance Type → `starter` $7/mo in the service Settings, or bump `plan:` in `render.yaml`.)
 5. Copy the service URL: `https://translatorrep-auth-proxy.onrender.com`.
+
+### A3b. Keep-alive ping (free tier stays warm for $0)
+
+Render free services sleep after ~15 min idle (first call then pays a ~30–60 s cold start — bad for a call app). A free uptime pinger fixes it:
+
+1. Sign up at **https://uptimerobot.com** (free).
+2. **Add New Monitor** → type **HTTP(s)** → URL = `https://translatorrep-auth-proxy.onrender.com/v1/healthz` → **Monitoring interval: 5 minutes** → Create.
+3. That keeps the service awake (5 min < the 15 min sleep threshold) → effectively always-on. A single always-pinged free service runs ~730 hrs/month, within Render's 750 free instance-hours. (Bonus: you also get uptime alerts.)
+
+`/v1/healthz` is a cheap unauthenticated status endpoint — safe to ping publicly; it exposes nothing sensitive.
 
 ### A4. App Check (so the auth-proxy's verification has something to check)
 
