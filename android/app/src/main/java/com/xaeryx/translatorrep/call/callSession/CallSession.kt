@@ -1,5 +1,6 @@
 package com.xaeryx.translatorrep.call.callSession
 
+import com.xaeryx.translatorrep.call.AudioRoute
 import com.xaeryx.translatorrep.call.CallType
 import com.xaeryx.translatorrep.logging.AllowedLogKey
 import com.xaeryx.translatorrep.logging.SafeLog
@@ -50,6 +51,12 @@ class CallSession(
         _muted.value = next
         return next
     }
+
+    /** Audio output route stream (Story 2.9) — what the In-Call routing toggle reflects. */
+    val audioRoute: Flow<AudioRoute> get() = roomManager.audioRoute
+
+    /** Cycle the audio output route (earpiece → speaker → BT/wired when available). */
+    fun cycleAudioRoute() = roomManager.cycleAudioRoute()
 
     /** End the current Call (Story 2.8). */
     suspend fun endCall() = roomManager.disconnect()

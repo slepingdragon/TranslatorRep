@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.xaeryx.translatorrep.call.AudioRoute
 import com.xaeryx.translatorrep.ui.theme.BorderGlass
 import com.xaeryx.translatorrep.ui.theme.StateRed
 import com.xaeryx.translatorrep.ui.theme.SurfaceGlass
@@ -30,6 +31,7 @@ import com.xaeryx.translatorrep.ui.theme.TextPrimary
 @Composable
 fun AudioCallControlRow(
     muted: Boolean,
+    route: AudioRoute,
     onToggleMute: () -> Unit,
     onToggleRoute: () -> Unit,
     onEnd: () -> Unit,
@@ -48,9 +50,10 @@ fun AudioCallControlRow(
         )
         CircleControl(
             icon = CallIcons.VolumeUp,
-            description = "Audio output",
+            description = "Audio output: ${routeLabel(route)}",
             onClick = onToggleRoute,
-            filled = false,
+            // Highlighted whenever output is routed away from the private earpiece (louder route).
+            filled = route != AudioRoute.EARPIECE,
         )
         CircleControl(
             icon = CallIcons.CallEnd,
@@ -102,4 +105,11 @@ private fun CircleControl(
             modifier = Modifier.size(26.dp),
         )
     }
+}
+
+private fun routeLabel(route: AudioRoute): String = when (route) {
+    AudioRoute.EARPIECE -> "Earpiece"
+    AudioRoute.SPEAKER -> "Speaker"
+    AudioRoute.BLUETOOTH -> "Bluetooth"
+    AudioRoute.WIRED_HEADSET -> "Wired headset"
 }
