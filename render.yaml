@@ -20,10 +20,12 @@ services:
     dockerContext: ./infra/auth-proxy
     # Singapore = closest Render region to Indonesia (match the LiveKit Cloud region).
     region: singapore
-    # `starter` is always-on (no cold starts mid-call-setup). `free` works for
-    # testing but spins down after ~15 min idle (first token request then pays a
-    # ~30s cold start). Security/privacy are identical on both.
-    plan: starter
+    # `free` ($0) spins down after ~15 min idle. We keep it warm with an external
+    # keep-alive ping (UptimeRobot) hitting /v1/healthz every 5 min, so it's
+    # effectively always-on for $0 — within Render's free 750 instance-hrs/month for
+    # a single service. Security/privacy are identical to paid tiers. (Bump to
+    # `starter` only if you'd rather not run the pinger.) See the runbook §A3.
+    plan: free
     healthCheckPath: /v1/healthz
     # Deploy on demand (dashboard), not on every push to main — review before
     # shipping a token-minting service.
