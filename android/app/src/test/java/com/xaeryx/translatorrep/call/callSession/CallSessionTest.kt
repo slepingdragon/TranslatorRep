@@ -25,9 +25,10 @@ class CallSessionTest {
             val manager = FakeRoomManager(flowOf(RoomState.ACTIVE, RoomState.ENDED))
             val session = CallSession(manager) { key, value -> logged += key to value }
 
-            val emitted = session.startCall(CallType.AUDIO).toList()
+            val emitted = session.startCall(CallType.AUDIO, PEER_UID).toList()
 
             assertEquals(CallType.AUDIO, manager.connectedWith)
+            assertEquals(PEER_UID, manager.connectedPeerUid)
             assertEquals(listOf(RoomState.ACTIVE, RoomState.ENDED), emitted)
             assertEquals(
                 listOf(
@@ -51,16 +52,23 @@ class CallSessionTest {
     private class FakeRoomManager(private val states: Flow<RoomState>) : RoomManager {
         var connectedWith: CallType? = null
             private set
+        var connectedPeerUid: String? = null
+            private set
         var disconnected = false
             private set
 
-        override fun connect(callType: CallType): Flow<RoomState> {
+        override fun connect(callType: CallType, peerUid: String): Flow<RoomState> {
             connectedWith = callType
+            connectedPeerUid = peerUid
             return states
         }
 
         override suspend fun disconnect() {
             disconnected = true
         }
+    }
+
+    private companion object {
+        const val PEER_UID = "partner-uid"
     }
 }

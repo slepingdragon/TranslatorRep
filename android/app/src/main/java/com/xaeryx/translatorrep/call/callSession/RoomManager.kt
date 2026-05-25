@@ -13,11 +13,11 @@ import kotlinx.coroutines.flow.Flow
 interface RoomManager {
 
     /**
-     * Connect to the room for [callType] and emit [RoomState] transitions until the call ends.
-     * The full connect mechanics (auth-proxy JWT → `room.connect` → event mapping) land in
-     * Story 2.3.
+     * Connect to the room shared with [peerUid] for [callType] and emit [RoomState] transitions
+     * until the call ends (the room name is derived server-side from the two UIDs). Fetches an
+     * auth-proxy JWT → `room.connect` → maps LiveKit events to [RoomState] (Story 2.3).
      */
-    fun connect(callType: CallType): Flow<RoomState>
+    fun connect(callType: CallType, peerUid: String): Flow<RoomState>
 
     /** Leave + tear down the room (Story 2.8 end-call / Epic 7 lifecycle). */
     suspend fun disconnect()

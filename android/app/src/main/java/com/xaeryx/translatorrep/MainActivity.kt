@@ -1,9 +1,13 @@
 package com.xaeryx.translatorrep
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,8 +27,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -101,6 +107,7 @@ class MainActivity : ComponentActivity() {
                                 PairingStatus.Unknown -> PairingLoadingGate()
                                 PairingStatus.Unpaired -> PairedEmptyRoute(ownerUid = state.uid)
                                 is PairingStatus.Paired -> PairedRoute(
+                                    partnerUid = pairing.partnerUid,
                                     partnerName = pairing.partnerName,
                                     onUnpair = {
                                         pairingRepository.unpair(state.uid, pairing.pairId)
@@ -173,16 +180,39 @@ private fun PairedEmptyRoute(ownerUid: String) {
  * (owns the LiveKit room lifecycle; Story 2.3 wires the real connection).
  */
 @Composable
-private fun PairedRoute(partnerName: String, onUnpair: () -> Unit) {
+private fun PairedRoute(partnerUid: String, partnerName: String, onUnpair: () -> Unit) {
+    val context = LocalContext.current
     var inCall by remember { mutableStateOf(false) }
-    val callSession = remember { CallSession(LiveKitRoomManager()) }
+    // CallSession owns the LiveKit room lifecycle (Story 2.2/2.3); UI never touches LiveKit.
+    val callSession = remember(context) {
+        CallSession(LiveKitRoomManager(context.applicationContext))
+    }
+
+    // Story 2.3: mic permission must be granted before a call can publish audio.
+    val micPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted -> if (granted) inCall = true }
 
     if (inCall) {
-        CallConnectingScreen(callSession = callSession, onEnd = { inCall = false })
+        CallConnectingScreen(
+            callSession = callSession,
+            peerUid = partnerUid,
+            onEnd = { inCall = false },
+        )
     } else {
         PairedHomeScreen(
             partnerName = partnerName,
-            onCall = { inCall = true },
+            onCall = {
+                val granted = ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.RECORD_AUDIO,
+                ) == PackageManager.PERMISSION_GRANTED
+                if (granted) {
+                    inCall = true
+                } else {
+                    micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                }
+            },
             // Story 1.13: unpair deletes /pairs + clears local state, flipping status to
             // Unpaired → re-routes to the Paired-Empty home.
             onUnpair = onUnpair,

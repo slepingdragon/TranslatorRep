@@ -30,6 +30,16 @@ android {
         // Pin a stable test resource directory for the cross-platform fixture
         // harness (Story 3.2 / Story 1.7). Fixtures live in /shared/ at the
         // repo root; Gradle copies them into androidTest resources at build.
+
+        // Story 2.3 — the auth-proxy base URL the client POSTs /v1/token to
+        // (LiveKit Cloud + Render; see docs/runbooks/livekit-cloud-render-setup.md).
+        // NOT a secret (public endpoint gated by Firebase Auth + App Check); the
+        // LiveKit WS URL comes back in the token response, so only this is needed.
+        buildConfigField(
+            "String",
+            "AUTH_PROXY_BASE_URL",
+            "\"https://translatorrep-auth-proxy.onrender.com\"",
+        )
     }
 
     // Story 1.6d signing config — release builds sign with the upload keystore
@@ -161,6 +171,9 @@ dependencies {
     // Google Tink — vetted crypto for X25519 identity keys (Story 1.12, ADR-A2) + Epic-5
     // ECDH. Wrapped behind e2ee/X25519Identity.kt.
     implementation(libs.tink.android)
+
+    // OkHttp — auth-proxy /v1/token request (Story 2.3); wrapped behind LiveKitTokenFetcher.
+    implementation(libs.okhttp)
 
     // Firebase — BOM-managed; Story 1.4 wires actual usage
     implementation(platform(libs.firebase.bom))

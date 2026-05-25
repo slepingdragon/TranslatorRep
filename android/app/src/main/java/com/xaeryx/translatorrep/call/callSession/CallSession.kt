@@ -22,12 +22,13 @@ class CallSession(
 ) {
 
     /**
-     * Start a Call of [callType] and observe its [RoomState] until it ends. Returns the room's
-     * state stream (no separate "connecting" state — the In-Call screen treats pre-[RoomState.ACTIVE]
-     * as connecting). Each transition is logged via [AllowedLogKey.ROOM_STATE].
+     * Start a Call of [callType] with the partner [peerUid] and observe its [RoomState] until it
+     * ends. Returns the room's state stream (no separate "connecting" state — the In-Call screen
+     * treats pre-[RoomState.ACTIVE] as connecting). Each transition is logged via
+     * [AllowedLogKey.ROOM_STATE].
      */
-    fun startCall(callType: CallType): Flow<RoomState> =
-        roomManager.connect(callType).onEach { logEvent(AllowedLogKey.ROOM_STATE, it.wireName) }
+    fun startCall(callType: CallType, peerUid: String): Flow<RoomState> =
+        roomManager.connect(callType, peerUid).onEach { logEvent(AllowedLogKey.ROOM_STATE, it.wireName) }
 
     /** End the current Call (Story 2.8). */
     suspend fun endCall() = roomManager.disconnect()
