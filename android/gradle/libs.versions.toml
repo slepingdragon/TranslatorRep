@@ -107,6 +107,7 @@ firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore
 firebase-appcheck-playintegrity = { group = "com.google.firebase", name = "firebase-appcheck-playintegrity" }
 firebase-appcheck-debug = { group = "com.google.firebase", name = "firebase-appcheck-debug" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics-ktx" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging-ktx" }
 
 # Local persistence — Room + SQLCipher for encrypted transcript history (FR-21)
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
@@ -153,6 +154,7 @@ firebase = [
     "firebase-firestore",
     "firebase-appcheck-playintegrity",
     "firebase-crashlytics",
+    "firebase-messaging",
 ]
 room = [
     "androidx-room-runtime",

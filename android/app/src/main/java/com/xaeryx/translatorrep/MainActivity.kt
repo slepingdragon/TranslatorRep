@@ -2,6 +2,7 @@ package com.xaeryx.translatorrep
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -37,8 +38,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.xaeryx.translatorrep.call.CallType
 import com.xaeryx.translatorrep.call.callSession.CallSession
+import com.xaeryx.translatorrep.call.incoming.IncomingCallNotifier
 import com.xaeryx.translatorrep.call.livekit.LiveKitRoomManager
 import com.xaeryx.translatorrep.call.signaling.CallSignalRepository
+import com.xaeryx.translatorrep.call.signaling.FcmTokenRepository
+import com.xaeryx.translatorrep.call.signaling.NotifyClient
 import com.xaeryx.translatorrep.call.ui.InCallScreen
 import com.xaeryx.translatorrep.call.ui.IncomingCallScreen
 import com.xaeryx.translatorrep.firebase.FirebaseSmokeTest
@@ -103,6 +107,24 @@ class MainActivity : ComponentActivity() {
                                 // Story 1.12: ensure the X25519 identity keypair exists +
                                 // its public half is published (ADR-A2). Fire-and-forget.
                                 app.identityRepository.start(state.uid)
+                                // Story 2.5: register this device's FCM token so the partner's
+                                // /v1/notify push can ring us when backgrounded. Best-effort.
+                                runCatching { FcmTokenRepository().registerCurrent(state.uid) }
+                            }
+                            // Story 2.5: ask for notification permission (Android 13+) so the
+                            // incoming-call ring can post. Best-effort — declined just means no ring.
+                            val notifPermissionLauncher = rememberLauncherForActivityResult(
+                                ActivityResultContracts.RequestPermission(),
+                            ) { /* result ignored — the ring posts if granted later */ }
+                            LaunchedEffect(Unit) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                    ContextCompat.checkSelfPermission(
+                                        this@MainActivity,
+                                        Manifest.permission.POST_NOTIFICATIONS,
+                                    ) != PackageManager.PERMISSION_GRANTED
+                                ) {
+                                    notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                }
                             }
                             when (
                                 val pairing =
@@ -209,6 +231,7 @@ private fun PairedRoute(
         CallSession(LiveKitRoomManager(context.applicationContext))
     }
     val signalRepo = remember { CallSignalRepository() }
+    val notifyClient = remember { NotifyClient() }
     val incomingCall by remember(pairId, ownerUid) {
         signalRepo.observeIncomingCall(pairId, ownerUid)
     }.collectAsStateWithLifecycle(initialValue = null)
@@ -249,6 +272,10 @@ private fun PairedRoute(
             clearRing()
         }
     }
+    // Brought to the foreground by a push ring → dismiss the notification; the in-app screen takes over.
+    LaunchedEffect(incomingCall) {
+        if (incomingCall != null) IncomingCallNotifier.cancel(context)
+    }
 
     when {
         inCall -> InCallScreen(
@@ -271,9 +298,11 @@ private fun PairedRoute(
             partnerName = partnerName,
             onCall = {
                 withMic {
-                    // Ring the partner (best-effort) and join the room ourselves.
+                    // Ring the partner — in-app signal (foreground) + FCM push (backgrounded) —
+                    // and join the room ourselves. Both best-effort.
                     scope.launch {
                         runCatching { signalRepo.ring(pairId, ownerUid, CallType.AUDIO) }
+                        notifyClient.ringPartner(CallType.AUDIO, partnerUid)
                     }
                     inCall = true
                 }

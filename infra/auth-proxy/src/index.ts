@@ -4,6 +4,7 @@ import { initFirebaseAdmin } from "./firebaseAdmin.js";
 import { logger } from "./lib/logger.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { healthzHandler } from "./routes/healthz.js";
+import { notifyChain } from "./routes/notify.js";
 import { tokenChain } from "./routes/token.js";
 
 /**
@@ -32,6 +33,7 @@ app.use(express.json({ limit: "32kb" }));
 // Routes.
 app.get("/v1/healthz", healthzHandler);
 app.post("/v1/token", ...tokenChain);
+app.post("/v1/notify", ...notifyChain);
 
 // Error handler — MUST be registered last.
 app.use(errorHandler);

@@ -26,6 +26,8 @@
 
     <!-- Incoming Call notifications (FR-7) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Full-screen incoming-call ring over the lock screen (Story 2.5) -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
     <!-- Wake-lock for active Call audio capture continuity -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -60,29 +62,17 @@
             </intent-filter>
         </activity>
 
-        <!--
-          Story 2.5 will register a self-managed PhoneAccount + ConnectionService
-          here for incoming-Call native UI. Declared as placeholder comment until
-          that story lands so we don't reference unresolved classes.
-
-          <service
-              android:name=".call.incoming.TranslatorRepConnectionService"
-              android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE"
-              android:foregroundServiceType="phoneCall"
-              android:exported="true">
-              <intent-filter>
-                  <action android:name="android.telecom.ConnectionService" />
-              </intent-filter>
-          </service>
-
-          <service
-              android:name=".call.incoming.IncomingCallMessagingService"
-              android:exported="false">
-              <intent-filter>
-                  <action android:name="com.google.firebase.MESSAGING_EVENT" />
-              </intent-filter>
-          </service>
-        -->
+        <!-- Story 2.5 — FCM receiver: wakes the app to ring on a high-priority incoming-call
+             push (background/lock-screen). The full self-managed PhoneAccount + ConnectionService
+             (native Telecom in-call surface) is a later refinement; for now a full-screen-intent
+             notification handles the ring. -->
+        <service
+            android:name=".call.incoming.IncomingCallMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
     </application>
 </manifest>
