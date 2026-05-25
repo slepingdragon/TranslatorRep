@@ -41,7 +41,9 @@ class LiveKitTokenFetcher(
         try {
             val idToken = auth.currentUser?.getIdToken(false)?.await()?.token
                 ?: return@withContext TokenResult.Failure(ERR_NO_SESSION)
-            val appCheckToken = appCheck.getAppCheckToken(false).await().token
+            // Best-effort: if App Check isn't available (or the proxy has APP_CHECK_ENFORCED
+            // off for testing), send an empty token rather than failing the whole call.
+            val appCheckToken = runCatching { appCheck.getAppCheckToken(false).await().token }.getOrNull().orEmpty()
 
             val bodyJson = JSONObject()
                 .put("firebaseIdToken", idToken)

@@ -64,9 +64,11 @@ Render free services sleep after ~15 min idle (first call then pays a ~30–60 s
 
 `/v1/healthz` is a cheap unauthenticated status endpoint — safe to ping publicly; it exposes nothing sensitive.
 
-### A4. App Check (so the auth-proxy's verification has something to check)
+### A4. App Check — and the testing shortcut
 
-- Firebase console → **App Check** → ensure the Android app is registered (Play Integrity for release; the debug provider token for debug builds — register it if Firestore/token calls get rejected in a debug build).
+The auth-proxy verifies an App Check token before minting a LiveKit token. For **release** builds (Play Store), Play Integrity handles this automatically. For **debug** builds you'd otherwise have to register a per-device debug token (Firebase console → App Check → your app → ⋮ → Manage debug tokens) — and re-register on every reinstall.
+
+**To skip that hassle while testing:** in Render → the service → **Environment** → add `APP_CHECK_ENFORCED` = **`false`** → save (it redeploys). Now `/v1/token` skips App Check (it still requires a valid signed-in Firebase user) and debug builds just work — no debug tokens. **Set it back to `true` (or remove it) before real use** to restore device attestation. (Pairing/Firestore is unaffected either way — App Check enforcement on Firestore is separate and off by default.)
 
 ---
 
