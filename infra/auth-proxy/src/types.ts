@@ -9,7 +9,14 @@ import { z } from "zod";
 // ── Request ─────────────────────────────────────────────────────────────
 export const tokenRequestSchema = z.object({
     firebaseIdToken: z.string().min(1, "firebaseIdToken required"),
-    appCheckToken: z.string().min(1, "appCheckToken required"),
+    // Allowed to be EMPTY: the client sends "" when it can't obtain an App Check
+    // token (emulators have no Play Integrity; debug builds without a registered
+    // debug token). Enforcement is governed by APP_CHECK_ENFORCED in authMiddleware,
+    // NOT here — a non-empty `.min(1)` guard at the parse stage would reject the
+    // empty token with ERR_INVALID_REQUEST *before* enforcement is consulted,
+    // making APP_CHECK_ENFORCED=false useless for testing. When enforcement IS on,
+    // an empty/invalid token is rejected by `verifyToken` → ERR_APP_CHECK_INVALID.
+    appCheckToken: z.string(),
     callType: z.enum(["audio", "video"]),
     peerUid: z.string().min(1, "peerUid required"),
 });

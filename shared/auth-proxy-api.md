@@ -43,7 +43,7 @@ Mint a short-lived LiveKit JWT for the requesting (attested) device.
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `firebaseIdToken` | string | yes | From `FirebaseAuth.currentUser.getIdToken()` on Android / `Auth.auth().currentUser?.getIDToken()` on iOS. Verified server-side via Firebase Admin SDK. |
-| `appCheckToken` | string | yes | From Firebase App Check (DeviceCheck iOS / Play Integrity Android). Verified via Admin SDK `getAppCheck().verifyToken(token)` against JWKS at `https://firebaseappcheck.googleapis.com/v1/jwks`. Missing or invalid → 401. |
+| `appCheckToken` | string | yes (may be empty) | From Firebase App Check (DeviceCheck iOS / Play Integrity Android). **The field must be present but may be an empty string** when the client can't obtain a token (emulators have no Play Integrity; debug builds without a registered debug token). When `APP_CHECK_ENFORCED=true` it is verified via Admin SDK `getAppCheck().verifyToken(token)` against JWKS at `https://firebaseappcheck.googleapis.com/v1/jwks` — empty/invalid → 401 (`ERR_APP_CHECK_INVALID`). When `APP_CHECK_ENFORCED=false` (dev/testing) the field is accepted without verification. Note: emptiness is **not** rejected at the request-parse stage, so the enforcement toggle actually governs behavior. |
 | `callType` | string enum | yes | `"audio"` \| `"video"`. Determines LiveKit room track-publishing permissions and embeds in JWT metadata claim for use by clients. |
 | `peerUid` | string | yes | The other Paired User's Firebase Auth UID. Used to derive a deterministic `roomName`. Server verifies the requester is actually paired with `peerUid` (Firestore `/pairs/{pairId}` lookup with requester as memberA or memberB). |
 

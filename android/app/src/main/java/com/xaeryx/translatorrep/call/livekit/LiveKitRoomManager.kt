@@ -4,6 +4,8 @@ import android.content.Context
 import com.xaeryx.translatorrep.call.CallType
 import com.xaeryx.translatorrep.call.callSession.RoomManager
 import com.xaeryx.translatorrep.call.callSession.RoomState
+import com.xaeryx.translatorrep.logging.AllowedLogKey
+import com.xaeryx.translatorrep.logging.SafeLog
 import io.livekit.android.LiveKit
 import io.livekit.android.room.Room
 import kotlinx.coroutines.CancellationException
@@ -33,7 +35,14 @@ class LiveKitRoomManager(
 
     override fun connect(callType: CallType, peerUid: String): Flow<RoomState> = flow {
         when (val token = tokenFetcher.fetchToken(callType, peerUid)) {
-            is TokenResult.Failure -> emit(RoomState.ENDED) // couldn't get a token → no call
+            is TokenResult.Failure -> {
+                // Surface WHY the token fetch failed (ERR_* from the proxy, or a client-side
+                // ERR_TOKEN_*). Without this the call just silently "ends" and the cause is
+                // only inferable from the ABSENCE of LiveKit logs. Logged as error_code so it
+                // lands in Logcat (debug) / Crashlytics (release).
+                SafeLog.event(AllowedLogKey.ERROR_CODE, "token_fetch_${token.errorCode}")
+                emit(RoomState.ENDED) // couldn't get a token → no call
+            }
             is TokenResult.Success -> emitCall(token)
         }
     }.onCompletion {

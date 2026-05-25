@@ -30,9 +30,16 @@ service cloud.firestore {
     // Only the two members can read or update the pair.
     // Create: the caller must be one of the two members in the new doc.
     match /pairs/{pairId} {
+      // NOTE: the read clause must NOT add `resource.data.memberX is string`
+      // type guards. The /pairs membership listener runs a disjunctive
+      // (OR) query — `memberA == uid OR memberB == uid` — and Firestore
+      // statically proves a query is safe against the rule. In the
+      // `memberB == uid` branch `memberA` is unconstrained, so a
+      // `memberA is string` guard can't be proven → the whole listen is
+      // rejected PERMISSION_DENIED (dead listener → pairing never flips the
+      // UI). The equality already implies the field exists + is a string,
+      // so the guards are redundant on read. Keep them only on `create`.
       allow read, update, delete: if request.auth != null
-        && resource.data.memberA is string
-        && resource.data.memberB is string
         && (resource.data.memberA == request.auth.uid
             || resource.data.memberB == request.auth.uid);
       allow create: if request.auth != null
