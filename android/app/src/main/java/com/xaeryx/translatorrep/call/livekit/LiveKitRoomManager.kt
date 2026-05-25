@@ -7,13 +7,17 @@ import com.xaeryx.translatorrep.call.callSession.RoomState
 import com.xaeryx.translatorrep.logging.AllowedLogKey
 import com.xaeryx.translatorrep.logging.SafeLog
 import io.livekit.android.LiveKit
+import io.livekit.android.events.RoomEvent
+import io.livekit.android.events.collect
 import io.livekit.android.room.Room
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.launch
 
 /**
  * The only class that talks to the LiveKit Android SDK (architecture Patterns §13). Owned by
@@ -67,14 +71,43 @@ class LiveKitRoomManager(
         }
         if (connected) {
             emit(RoomState.ACTIVE)
-            awaitCancellation() // stay in the call until the collector is cancelled (End)
+            // Stay active until the PEER leaves or the room drops, then end for us too (Story 2.8
+            // peer-left). Pressing End instead cancels this flow (collector disposed) → onCompletion
+            // tears the room down. In a 1:1 call, any ParticipantDisconnected is the partner hanging
+            // up. (Rich lifecycle — network-drop reconnect, leave-and-rejoin — is Epic 7.)
+            activeRoom.awaitPeerLeftOrDisconnect()
+            emit(RoomState.ENDED)
         } else {
             emit(RoomState.ENDED)
         }
     }
 
+    /**
+     * Suspend until the partner disconnects or the room itself drops. `room.events` is a LiveKit
+     * [io.livekit.android.events.EventListenable] (not a kotlinx Flow), so we collect it in a
+     * child coroutine and resolve a [CompletableDeferred] on the first terminal event, then cancel
+     * the collector. Cancelling the caller (user pressed End) cancels this scope cleanly.
+     */
+    private suspend fun Room.awaitPeerLeftOrDisconnect() = coroutineScope {
+        val terminal = CompletableDeferred<Unit>()
+        val collector = launch {
+            events.collect { event ->
+                if (event is RoomEvent.ParticipantDisconnected || event is RoomEvent.Disconnected) {
+                    terminal.complete(Unit)
+                }
+            }
+        }
+        terminal.await()
+        collector.cancel()
+    }
+
     override suspend fun disconnect() {
         room?.disconnect()
         room = null
+    }
+
+    /** Flip the local mic track (Story 2.7). No-op if the room isn't up yet. */
+    override suspend fun setMicrophoneEnabled(enabled: Boolean) {
+        room?.localParticipant?.setMicrophoneEnabled(enabled)
     }
 }

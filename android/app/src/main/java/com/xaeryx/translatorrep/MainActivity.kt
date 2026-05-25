@@ -36,7 +36,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.xaeryx.translatorrep.call.callSession.CallSession
 import com.xaeryx.translatorrep.call.livekit.LiveKitRoomManager
-import com.xaeryx.translatorrep.call.ui.CallConnectingScreen
+import com.xaeryx.translatorrep.call.ui.InCallScreen
 import com.xaeryx.translatorrep.firebase.FirebaseSmokeTest
 import com.xaeryx.translatorrep.pairing.AnonymousAuthRepository
 import com.xaeryx.translatorrep.pairing.AuthState
@@ -194,8 +194,9 @@ private fun PairedRoute(partnerUid: String, partnerName: String, onUnpair: () ->
     ) { granted -> if (granted) inCall = true }
 
     if (inCall) {
-        CallConnectingScreen(
+        InCallScreen(
             callSession = callSession,
+            partnerName = partnerName,
             peerUid = partnerUid,
             onEnd = { inCall = false },
         )

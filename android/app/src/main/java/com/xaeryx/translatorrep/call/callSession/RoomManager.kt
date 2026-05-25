@@ -21,4 +21,12 @@ interface RoomManager {
 
     /** Leave + tear down the room (Story 2.8 end-call / Epic 7 lifecycle). */
     suspend fun disconnect()
+
+    /**
+     * Enable/disable the local microphone track (Story 2.7 mute control). Default no-op so
+     * in-memory fakes don't need to implement it; [com.xaeryx.translatorrep.call.livekit.LiveKitRoomManager]
+     * overrides it to flip the LiveKit local-participant mic. Safe to call before/after the
+     * room exists — a missing room is a silent no-op (the next call re-publishes anyway).
+     */
+    suspend fun setMicrophoneEnabled(enabled: Boolean) {}
 }
