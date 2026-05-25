@@ -35,11 +35,14 @@ class PairingStatusRepository(
         if (started) return
         started = true
         scope.launch {
-            // Offline-first: surface the mirrored pair immediately if we have one.
-            mirror.read()?.let {
-                _status.value = PairingStatus.Paired(it.pairId, it.partnerUid, it.partnerName)
-            }
-            // Then keep in sync with the live /pairs membership.
+            // Offline-first: resolve IMMEDIATELY from the local mirror so we never sit on
+            // [PairingStatus.Unknown] (the loading gate). Empty mirror → Unpaired (show the
+            // Paired-Empty home + the user's code); present → Paired. The live listener below
+            // then refines this; if it errors or is slow, we still aren't stuck on a spinner.
+            _status.value = mirror.read()
+                ?.let { PairingStatus.Paired(it.pairId, it.partnerUid, it.partnerName) }
+                ?: PairingStatus.Unpaired
+            // Keep in sync with the live /pairs membership.
             directory.observePairFor(myUid).collect { remote ->
                 _status.value = reconcile(myUid, remote)
             }

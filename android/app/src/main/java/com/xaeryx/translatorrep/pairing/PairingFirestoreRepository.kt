@@ -6,6 +6,8 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.SetOptions
+import com.xaeryx.translatorrep.logging.AllowedLogKey
+import com.xaeryx.translatorrep.logging.SafeLog
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -142,7 +144,10 @@ class PairingFirestoreRepository(
     override fun observePairFor(myUid: String): Flow<RemotePair?> = callbackFlow {
         val registration = membershipQuery(myUid).addSnapshotListener { snapshot, error ->
             if (error != null) {
-                // Transient (e.g. offline) — keep the last emitted value; don't close the flow.
+                // Don't crash/hang — keep the last status (offline-first). Log the Firestore
+                // error code (PERMISSION_DENIED / FAILED_PRECONDITION=missing-index /
+                // UNAVAILABLE / …) so a stuck listener is diagnosable in Logcat.
+                SafeLog.event(AllowedLogKey.ERROR_CODE, "pairs_listen_${error.code.name}")
                 return@addSnapshotListener
             }
             trySend(snapshot?.documents?.firstOrNull()?.toRemotePair())
