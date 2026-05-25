@@ -34,14 +34,15 @@ import kotlinx.coroutines.launch
 @Composable
 fun CallConnectingScreen(
     callSession: CallSession,
+    peerUid: String,
     onEnd: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var roomState by remember { mutableStateOf<RoomState?>(null) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(callSession) {
-        callSession.startCall(CallType.AUDIO).collect { roomState = it }
+    LaunchedEffect(callSession, peerUid) {
+        callSession.startCall(CallType.AUDIO, peerUid).collect { roomState = it }
     }
 
     Box(

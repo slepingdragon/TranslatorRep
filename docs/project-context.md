@@ -340,7 +340,7 @@ Started: 9 stories done (1.1, 1.5, 1.6, 1.7, 1.14a/b/c, 3.2) + 3.2b in-progress 
 | 6 | Infra CI flesh-out | 1.6c | **DONE 2026-05-24** — decoupled from Session 2 (Oracle): lint/test/build only; ssh-deploy step deferred |
 | 7 | Particle rules completion — easier | 3.2b Phase 4 (TQ-3 + TQ-6) | **DONE 2026-05-24** |
 | 8 | Particle rules completion — harder | 3.2b Phase 4b (TQ-4 + TQ-5 + TQ-7 + TQ-8) | **Bania's girlfriend's linguistic input** for slang/Sundanese |
-| 9 | Audio calling — auth + call placement | 2.2 **DONE** (CallSession scaffold + Call button); **2.1 Phase 1 DONE** (2026-05-24, render.yaml + LiveKit-Cloud/Render runbook); 2.3 (place call) | epic-2 **in-progress**; 2.1 Phase 2/2.3 need Brady: LiveKit Cloud project + Render deploy (see `docs/runbooks/livekit-cloud-render-setup.md`) |
+| 9 | Audio calling — auth + call placement | 2.2 **DONE**; **2.1 DONE** (2026-05-24 — backend LIVE: LiveKit Cloud + Render auth-proxy `translatorrep-auth-proxy.onrender.com`, free + UptimeRobot keep-alive); **2.3 wired** (real call: token→room.connect→mic→ACTIVE) | epic-2 **in-progress**; **2.3 `review` — needs Brady's 2-device call test to flip `done`** |
 | 10 | Audio calling — Android FCM + lifecycle | 2.5, 2.6, 2.7, 2.8 | Session 9 |
 | 11 | Audio calling — finish + taxonomy | 2.9, 2.10, 2.11 | Session 10 |
 | 12 | Translation — interfaces + Android ASR + VAD | 3.3 **DONE** (2026-05-24, provider interfaces + cancellation contract + fakes), 3.4 (Android ASR, needs device), 3.6 (VAD) | epic-3 **in-progress** |

@@ -64,6 +64,10 @@ detekt = "1.23.7"
 # Also provides computeSharedSecret for the Epic-5 per-call ECDH.
 tink = "1.15.0"
 
+# OkHttp — HTTP client for the auth-proxy /v1/token call (Story 2.3). LiveKit pulls OkHttp 4.x
+# transitively; pin the same major so Gradle resolves cleanly.
+okhttp = "4.12.0"
+
 [libraries]
 # Core / Activity / Lifecycle
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -117,6 +121,9 @@ ulid-kotlin = { group = "com.aallam.ulid", name = "ulid-kotlin", version.ref = "
 # Google Tink (Android) — X25519 identity keys (Story 1.12) + Epic-5 ECDH. Wrapped behind
 # e2ee/X25519Identity.kt; callers never touch Tink directly.
 tink-android = { group = "com.google.crypto.tink", name = "tink-android", version.ref = "tink" }
+
+# OkHttp — auth-proxy /v1/token request (Story 2.3). Wrapped behind call/livekit/LiveKitTokenFetcher.kt.
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 
 # Testing
 junit = { group = "junit", name = "junit", version = "4.13.2" }
