@@ -194,7 +194,7 @@ private fun EndCallConfirmSheet(onConfirm: () -> Unit, onDismiss: () -> Unit) {
 
 /** Pre-[RoomState.ACTIVE] status copy — calm, never an "AI listening" / spinner line. */
 private fun connectingLabel(state: RoomState?): String = when (state) {
-    RoomState.WAITING_FOR_PARTNER -> "Waiting for partner…"
+    RoomState.WAITING_FOR_PARTNER -> "Calling…"
     RoomState.ENDED -> "Call ended"
     null, RoomState.ACTIVE -> "Connecting…"
 }

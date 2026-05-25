@@ -24,6 +24,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,9 +35,12 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.xaeryx.translatorrep.call.CallType
 import com.xaeryx.translatorrep.call.callSession.CallSession
 import com.xaeryx.translatorrep.call.livekit.LiveKitRoomManager
+import com.xaeryx.translatorrep.call.signaling.CallSignalRepository
 import com.xaeryx.translatorrep.call.ui.InCallScreen
+import com.xaeryx.translatorrep.call.ui.IncomingCallScreen
 import com.xaeryx.translatorrep.firebase.FirebaseSmokeTest
 import com.xaeryx.translatorrep.pairing.AnonymousAuthRepository
 import com.xaeryx.translatorrep.pairing.AuthState
@@ -107,6 +111,8 @@ class MainActivity : ComponentActivity() {
                                 PairingStatus.Unknown -> PairingLoadingGate()
                                 PairingStatus.Unpaired -> PairedEmptyRoute(ownerUid = state.uid)
                                 is PairingStatus.Paired -> PairedRoute(
+                                    ownerUid = state.uid,
+                                    pairId = pairing.pairId,
                                     partnerUid = pairing.partnerUid,
                                     partnerName = pairing.partnerName,
                                     onUnpair = {
@@ -175,43 +181,101 @@ private fun PairedEmptyRoute(ownerUid: String) {
 }
 
 /**
- * Paired destination (Story 2.2): the Paired home with the Call button, toggling into the
- * (scaffold) in-call screen when Call is tapped. The `CallSession` is the orchestration seam
- * (owns the LiveKit room lifecycle; Story 2.3 wires the real connection).
+ * Paired destination. Routes between three screens for the pair:
+ *  - [InCallScreen] once a call is active (Story 2.2/2.3/2.7);
+ *  - [IncomingCallScreen] when the partner is ringing us (Story 2.5/2.6 in-app MVP — the signal
+ *    rides the `/pairs` doc via [CallSignalRepository]); and
+ *  - [PairedHomeScreen] otherwise (Call button + settings/unpair).
+ *
+ * The `CallSession` owns the LiveKit room lifecycle (UI never touches LiveKit). Tapping Call rings
+ * the partner AND joins the room; the partner accepts (joins the same deterministic room) or
+ * declines. Mic permission is requested before publishing audio (caller and accepter alike).
  */
 @Composable
-private fun PairedRoute(partnerUid: String, partnerName: String, onUnpair: () -> Unit) {
+private fun PairedRoute(
+    ownerUid: String,
+    pairId: String,
+    partnerUid: String,
+    partnerName: String,
+    onUnpair: () -> Unit,
+) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var inCall by remember { mutableStateOf(false) }
+    var pendingOnMic by remember { mutableStateOf<(() -> Unit)?>(null) }
+
     // CallSession owns the LiveKit room lifecycle (Story 2.2/2.3); UI never touches LiveKit.
     val callSession = remember(context) {
         CallSession(LiveKitRoomManager(context.applicationContext))
     }
+    val signalRepo = remember { CallSignalRepository() }
+    val incomingCall by remember(pairId, ownerUid) {
+        signalRepo.observeIncomingCall(pairId, ownerUid)
+    }.collectAsStateWithLifecycle(initialValue = null)
+    val outgoingDeclined by remember(pairId, ownerUid) {
+        signalRepo.observeOutgoingDeclined(pairId, ownerUid)
+    }.collectAsStateWithLifecycle(initialValue = false)
 
-    // Story 2.3: mic permission must be granted before a call can publish audio.
+    // Story 2.3: mic permission must be granted before a call can publish audio. One launcher
+    // serves both "place call" and "accept call" — the granted action is captured in pendingOnMic.
     val micPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
-    ) { granted -> if (granted) inCall = true }
+    ) { granted ->
+        if (granted) pendingOnMic?.invoke()
+        pendingOnMic = null
+    }
 
-    if (inCall) {
-        InCallScreen(
+    fun withMic(action: () -> Unit) {
+        val granted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.RECORD_AUDIO,
+        ) == PackageManager.PERMISSION_GRANTED
+        if (granted) {
+            action()
+        } else {
+            pendingOnMic = action
+            micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
+    fun clearRing() {
+        scope.launch { runCatching { signalRepo.clear(pairId) } }
+    }
+
+    // Partner declined our outgoing call → end it promptly instead of ringing out the timeout.
+    LaunchedEffect(outgoingDeclined) {
+        if (outgoingDeclined && inCall) {
+            inCall = false
+            clearRing()
+        }
+    }
+
+    when {
+        inCall -> InCallScreen(
             callSession = callSession,
             partnerName = partnerName,
             peerUid = partnerUid,
-            onEnd = { inCall = false },
+            onEnd = {
+                inCall = false
+                clearRing()
+            },
         )
-    } else {
-        PairedHomeScreen(
+
+        incomingCall != null -> IncomingCallScreen(
+            partnerName = partnerName,
+            onAccept = { withMic { clearRing(); inCall = true } },
+            onDecline = { scope.launch { runCatching { signalRepo.decline(pairId) } } },
+        )
+
+        else -> PairedHomeScreen(
             partnerName = partnerName,
             onCall = {
-                val granted = ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.RECORD_AUDIO,
-                ) == PackageManager.PERMISSION_GRANTED
-                if (granted) {
+                withMic {
+                    // Ring the partner (best-effort) and join the room ourselves.
+                    scope.launch {
+                        runCatching { signalRepo.ring(pairId, ownerUid, CallType.AUDIO) }
+                    }
                     inCall = true
-                } else {
-                    micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                 }
             },
             // Story 1.13: unpair deletes /pairs + clears local state, flipping status to

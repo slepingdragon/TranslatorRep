@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 internal object CallIcons {
     val Mic: ImageVector by lazy { build("Mic", MIC) }
     val MicOff: ImageVector by lazy { build("MicOff", MIC_OFF) }
+    val Call: ImageVector by lazy { build("Call", CALL) }
     val CallEnd: ImageVector by lazy { build("CallEnd", CALL_END) }
     val VolumeUp: ImageVector by lazy { build("VolumeUp", VOLUME_UP) }
 
@@ -44,6 +45,11 @@ internal object CallIcons {
             "M4.27,3L3,4.27l6,6L9,11c0,1.66 1.34,3 3,3 0.22,0 0.44,-0.03 0.65,-0.08l1.66,1.66" +
             "c-0.71,0.33 -1.5,0.52 -2.31,0.52 -2.76,0 -5.3,-2.1 -5.3,-5.1L5,11c0,3.41 2.72,6.23 6,6.72L11,21h2v-3.28" +
             "c0.91,-0.13 1.77,-0.45 2.54,-0.9L19.73,21 21,19.73 4.27,3z"
+
+    private const val CALL =
+        "M6.62,10.79c1.44,2.83 3.76,5.14 6.59,6.59l2.2,-2.2c0.27,-0.27 0.67,-0.36 1.02,-0.24 1.12,0.37 2.33,0.57 3.57,0.57" +
+            " 0.55,0 1,0.45 1,1V20c0,0.55 -0.45,1 -1,1 -9.39,0 -17,-7.61 -17,-17 0,-0.55 0.45,-1 1,-1h3.5" +
+            "c0.55,0 1,0.45 1,1 0,1.25 0.2,2.45 0.57,3.57 0.11,0.35 0.03,0.74 -0.24,1.02l-2.2,2.2z"
 
     private const val CALL_END =
         "M12,9c-1.6,0 -3.15,0.25 -4.6,0.72v3.1c0,0.39 -0.23,0.74 -0.56,0.9 -0.98,0.49 -1.87,1.12 -2.66,1.85" +

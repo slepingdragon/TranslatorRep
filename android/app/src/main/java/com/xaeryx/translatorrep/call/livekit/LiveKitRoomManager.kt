@@ -17,13 +17,13 @@ import io.livekit.android.events.collect
 import io.livekit.android.room.Room
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * The only class that talks to the LiveKit Android SDK (architecture Patterns §13). Owned by
@@ -69,17 +69,16 @@ class LiveKitRoomManager(
         }
     }
 
-    override fun connect(callType: CallType, peerUid: String): Flow<RoomState> = flow {
+    override fun connect(callType: CallType, peerUid: String): Flow<RoomState> = channelFlow {
         when (val token = tokenFetcher.fetchToken(callType, peerUid)) {
             is TokenResult.Failure -> {
                 // Surface WHY the token fetch failed (ERR_* from the proxy, or a client-side
-                // ERR_TOKEN_*). Without this the call just silently "ends" and the cause is
-                // only inferable from the ABSENCE of LiveKit logs. Logged as error_code so it
-                // lands in Logcat (debug) / Crashlytics (release).
+                // ERR_TOKEN_*) — otherwise a failed call just silently "ends" and the cause is
+                // only inferable from the ABSENCE of LiveKit logs.
                 SafeLog.event(AllowedLogKey.ERROR_CODE, "token_fetch_${token.errorCode}")
-                emit(RoomState.ENDED) // couldn't get a token → no call
+                send(RoomState.ENDED)
             }
-            is TokenResult.Success -> emitCall(token)
+            is TokenResult.Success -> runCall(token)
         }
     }.onCompletion {
         // Flow cancelled (user left the call) or completed → tear down the room.
@@ -88,9 +87,17 @@ class LiveKitRoomManager(
         routeState.value = AudioRoute.EARPIECE
     }
 
-    /** Connect + publish mic, then hold [RoomState.ACTIVE] until the flow is cancelled. */
+    /**
+     * Connect + publish mic, then run the call's state machine until it ends:
+     *  - [RoomState.WAITING_FOR_PARTNER] ("Calling…") while we're connected but the partner hasn't
+     *    joined yet; [RoomState.ACTIVE] the moment they do (or immediately if they were already
+     *    there — i.e. we're the one accepting).
+     *  - [RoomState.ENDED] when the partner leaves / the room drops, OR if nobody joins within
+     *    [RING_TIMEOUT_MS] (no answer / declined — so the caller never sits in an empty room).
+     * Uses channelFlow so the event-collector + ring-timeout coroutines can [send] concurrently.
+     */
     @Suppress("TooGenericExceptionCaught") // LiveKit connect throws varied types; map to ENDED.
-    private suspend fun FlowCollector<RoomState>.emitCall(token: TokenResult.Success) {
+    private suspend fun ProducerScope<RoomState>.runCall(token: TokenResult.Success) {
         val activeRoom = LiveKit.create(
             appContext,
             overrides = LiveKitOverrides(audioOptions = AudioOptions(audioHandler = audioSwitch)),
@@ -105,36 +112,45 @@ class LiveKitRoomManager(
         } catch (e: Exception) {
             false
         }
-        if (connected) {
-            emit(RoomState.ACTIVE)
-            // Stay active until the PEER leaves or the room drops, then end for us too (Story 2.8
-            // peer-left). Pressing End instead cancels this flow (collector disposed) → onCompletion
-            // tears the room down. In a 1:1 call, any ParticipantDisconnected is the partner hanging
-            // up. (Rich lifecycle — network-drop reconnect, leave-and-rejoin — is Epic 7.)
-            activeRoom.awaitPeerLeftOrDisconnect()
-            emit(RoomState.ENDED)
-        } else {
-            emit(RoomState.ENDED)
+        if (!connected) {
+            send(RoomState.ENDED)
+            return
         }
-    }
 
-    /**
-     * Suspend until the partner disconnects or the room itself drops. `room.events` is a LiveKit
-     * [io.livekit.android.events.EventListenable] (not a kotlinx Flow), so we collect it in a
-     * child coroutine and resolve a [CompletableDeferred] on the first terminal event, then cancel
-     * the collector. Cancelling the caller (user pressed End) cancels this scope cleanly.
-     */
-    private suspend fun Room.awaitPeerLeftOrDisconnect() = coroutineScope {
+        // ACTIVE only once the PARTNER is actually present. Already here → we're accepting (active
+        // now); otherwise we're calling → WAITING_FOR_PARTNER ("Calling…") until they join.
+        val peerPresent = activeRoom.remoteParticipants.isNotEmpty()
+        val peerJoined = CompletableDeferred<Unit>()
+        if (peerPresent) peerJoined.complete(Unit)
         val terminal = CompletableDeferred<Unit>()
-        val collector = launch {
-            events.collect { event ->
-                if (event is RoomEvent.ParticipantDisconnected || event is RoomEvent.Disconnected) {
-                    terminal.complete(Unit)
+
+        send(if (peerPresent) RoomState.ACTIVE else RoomState.WAITING_FOR_PARTNER)
+
+        val eventCollector = launch {
+            activeRoom.events.collect { event ->
+                when (event) {
+                    is RoomEvent.ParticipantConnected -> peerJoined.complete(Unit)
+                    is RoomEvent.ParticipantDisconnected, is RoomEvent.Disconnected ->
+                        terminal.complete(Unit)
+                    else -> Unit
                 }
             }
         }
+        val activator = launch {
+            peerJoined.await()
+            if (!peerPresent) send(RoomState.ACTIVE)
+        }
+        val ringTimeout = launch {
+            if (withTimeoutOrNull(RING_TIMEOUT_MS) { peerJoined.await() } == null) {
+                terminal.complete(Unit) // nobody answered
+            }
+        }
+
         terminal.await()
-        collector.cancel()
+        eventCollector.cancel()
+        activator.cancel()
+        ringTimeout.cancel()
+        send(RoomState.ENDED)
     }
 
     override suspend fun disconnect() {
@@ -164,5 +180,10 @@ class LiveKitRoomManager(
         is AudioDevice.BluetoothHeadset -> AudioRoute.BLUETOOTH
         is AudioDevice.WiredHeadset -> AudioRoute.WIRED_HEADSET
         is AudioDevice.Earpiece, null -> AudioRoute.EARPIECE
+    }
+
+    private companion object {
+        /** How long the caller rings before giving up (no answer / declined). Story 2.5: ~30s. */
+        const val RING_TIMEOUT_MS = 30_000L
     }
 }
